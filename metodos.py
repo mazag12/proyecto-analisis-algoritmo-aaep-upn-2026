@@ -75,11 +75,13 @@ incidencias = [
 # BUSQUEDA DE EQUIPO
 
 def buscar_equipo(codigo):
+    if not isinstance(codigo, str):
+        return None
+
+    codigo = codigo.strip().upper()
 
     for equipo in equipos:
-
-        if equipo["codigo"].lower() == codigo.lower():
-
+        if equipo["codigo"].upper() == codigo:
             return equipo
 
     return None
@@ -145,7 +147,6 @@ def ordenar_por_tiempo(lista):
 # REGISTRAR EQUIPO
 
 def registrar_equipo(codigo, tipo, marca, modelo, usuario):
-
     nuevo_id = len(equipos) + 1
 
     equipo = {
@@ -172,11 +173,9 @@ def registrar_incidencia(
     prioridad,
     tiempo
 ):
-
     equipo = buscar_equipo(codigo)
 
     if equipo is None:
-
         return False
 
     nuevo_id = len(incidencias) + 1
@@ -386,6 +385,7 @@ def demostracion_algoritmos():
 
 # BURBUJA SIMPLE DESCENDENTE
 
+#Verificación de datos
 def burbuja_descendente_simple(lista):
 
     n = len(lista)
@@ -402,3 +402,114 @@ def burbuja_descendente_simple(lista):
                 )
 
     return lista
+
+def validar_texto(mensaje, campo):
+    while True:
+        valor = input(mensaje).strip()
+
+        if valor == "":
+            print(f"ERROR: El campo {campo} no puede estar vacío.")
+            continue
+
+        return valor
+
+
+def validar_entero(mensaje, minimo=None, maximo=None):
+    while True:
+        valor = input(mensaje).strip()
+
+        try:
+            numero = int(valor)
+
+            if minimo is not None and numero < minimo:
+                print(
+                    f"ERROR: El valor debe ser mayor o igual a {minimo}."
+                )
+                continue
+
+            if maximo is not None and numero > maximo:
+                print(
+                    f"ERROR: El valor debe ser menor o igual a {maximo}."
+                )
+                continue
+
+            return numero
+
+        except ValueError:
+            print("ERROR: Debe ingresar un número entero válido.")
+
+
+def validar_codigo_equipo(mensaje):
+    while True:
+        codigo = input(mensaje).strip().upper()
+
+        if codigo == "":
+            print("ERROR: El código no puede estar vacío.")
+            continue
+
+        equipo = buscar_equipo(codigo)
+
+        if equipo is None:
+            print(f"ERROR: No existe el equipo con código '{codigo}'.")
+            continue
+
+        return codigo
+
+
+def validar_codigo_nuevo():
+    while True:
+        codigo = input("Código: ").strip().upper()
+
+        if codigo == "":
+            print("ERROR: El código no puede estar vacío.")
+            continue
+
+        if buscar_equipo(codigo) is not None:
+            print(
+                f"ERROR: Ya existe un equipo con el código '{codigo}'."
+            )
+            continue
+
+        return codigo
+
+
+def validar_tipo_mantenimiento():
+    while True:
+        print("\nTipo de mantenimiento")
+        print("1. Preventivo")
+        print("2. Correctivo")
+        print("3. Predictivo")
+
+        opcion = input("Seleccione: ").strip()
+
+        tipos = {
+            "1": "Preventivo",
+            "2": "Correctivo",
+            "3": "Predictivo"
+        }
+
+        if opcion in tipos:
+            return tipos[opcion]
+
+        print("ERROR: Seleccione una opción entre 1 y 3.")
+
+
+def validar_estado():
+    while True:
+        print("\nEstado de la incidencia")
+        print("1. Pendiente")
+        print("2. En proceso")
+        print("3. Finalizado")
+
+        opcion = input("Seleccione: ").strip()
+
+        estados = {
+            "1": "Pendiente",
+            "2": "En proceso",
+            "3": "Finalizado"
+        }
+
+        if opcion in estados:
+            return estados[opcion]
+
+        print("ERROR: Seleccione una opción entre 1 y 3.")

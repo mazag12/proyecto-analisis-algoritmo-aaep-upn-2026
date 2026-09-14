@@ -63,17 +63,32 @@ def mostrar_incidencias(lista=None):
 
 
 def menu_registrar_equipo():
-
     print("\n")
     print("=" * 50)
     print("             REGISTRAR EQUIPO")
     print("=" * 50)
 
-    codigo = input("Código: ")
-    tipo = input("Tipo: ")
-    marca = input("Marca: ")
-    modelo = input("Modelo: ")
-    usuario = input("Usuario: ")
+    codigo = validar_codigo_nuevo()
+
+    tipo = validar_texto(
+        "Tipo: ",
+        "tipo"
+    )
+
+    marca = validar_texto(
+        "Marca: ",
+        "marca"
+    )
+
+    modelo = validar_texto(
+        "Modelo: ",
+        "modelo"
+    )
+
+    usuario = validar_texto(
+        "Usuario: ",
+        "usuario"
+    )
 
     equipo = registrar_equipo(
         codigo,
@@ -84,82 +99,46 @@ def menu_registrar_equipo():
     )
 
     print("\nEquipo registrado correctamente.")
-
     print(f"ID asignado: {equipo['id']}")
-
 
 
 # MENU REGISTRAR INCIDENCIA
 
 
 def menu_registrar_incidencia():
-
     print("\n")
     print("=" * 50)
     print("            REGISTRAR INCIDENCIA")
     print("=" * 50)
 
-    codigo = input("Código del equipo: ")
+    codigo = validar_codigo_equipo(
+        "Código del equipo: "
+    )
 
-    equipo = buscar_equipo(codigo)
+    problema = validar_texto(
+        "Problema: ",
+        "problema"
+    )
 
-    if equipo is None:
-
-        print("\nERROR: El equipo no existe.")
-
-        return
-
-    problema = input("Problema: ")
-
-    print("\nTipo de mantenimiento")
-
-    print("1. Preventivo")
-    print("2. Correctivo")
-    print("3. Predictivo")
-
-    opcion = input("Seleccione: ")
-
-    if opcion == "1":
-
-        tipo = "Preventivo"
-
-    elif opcion == "2":
-
-        tipo = "Correctivo"
-
-    elif opcion == "3":
-
-        tipo = "Predictivo"
-
-    else:
-
-        print("Opción incorrecta.")
-
-        return
+    tipo = validar_tipo_mantenimiento()
 
     print("\nPrioridad")
-
     print("1. Baja")
     print("2. Media")
     print("3. Normal")
     print("4. Alta")
     print("5. Crítica")
 
-    try:
+    prioridad = validar_entero(
+        "Seleccione prioridad: ",
+        1,
+        5
+    )
 
-        prioridad = int(
-            input("Seleccione prioridad: ")
-        )
-
-        tiempo = int(
-            input("Tiempo estimado en minutos: ")
-        )
-
-    except ValueError:
-
-        print("\nDebe ingresar números.")
-
-        return
+    tiempo = validar_entero(
+        "Tiempo estimado en minutos: ",
+        1
+    )
 
     resultado = registrar_incidencia(
         codigo,
@@ -170,12 +149,10 @@ def menu_registrar_incidencia():
     )
 
     if resultado:
-
         print("\nIncidencia registrada correctamente.")
-
+        print(f"ID asignado: {resultado['id']}")
     else:
-
-        print("\nNo se pudo registrar la incidencia.")
+        print("\nERROR: No se pudo registrar la incidencia.")
 
 
 # BUSCAR EQUIPO
@@ -290,54 +267,37 @@ def menu_planificar():
 # ACTUALIZAR ESTADO
 
 def menu_actualizar_estado():
-
     print("\n")
     print("=" * 50)
     print("             ACTUALIZAR ESTADO")
     print("=" * 50)
 
-    try:
+    id_incidencia = validar_entero(
+        "ID de incidencia: ",
+        1
+    )
 
-        id_incidencia = int(
-            input("ID de incidencia: ")
+    incidencia = buscar_incidencia(id_incidencia)
+
+    if incidencia is None:
+        print(
+            f"\nERROR: No existe una incidencia con ID "
+            f"{id_incidencia}."
         )
-
-    except ValueError:
-
-        print("ID inválido.")
-
         return
 
-    print("\n1. Pendiente")
-    print("2. En proceso")
-    print("3. Finalizado")
-
-    opcion = input("Seleccione: ")
-
-    estados = {
-        "1": "Pendiente",
-        "2": "En proceso",
-        "3": "Finalizado"
-    }
-
-    if opcion not in estados:
-
-        print("Opción inválida.")
-
-        return
+    nuevo_estado = validar_estado()
 
     resultado = actualizar_estado(
         id_incidencia,
-        estados[opcion]
+        nuevo_estado
     )
 
     if resultado:
-
         print("\nEstado actualizado correctamente.")
-
+        print(f"Nuevo estado: {nuevo_estado}")
     else:
-
-        print("\nIncidencia no encontrada.")
+        print("\nERROR: No se pudo actualizar el estado.")
 
 
 # ESTADISTICAS
@@ -430,7 +390,7 @@ def menu():
 0. Salir
 """)
 
-        opcion = input("Seleccione una opción: ")
+        opcion = input("Seleccione una opción: ").strip()
 
         if opcion == "1":
 
@@ -484,9 +444,10 @@ def menu():
 
         else:
 
-            print("\nOpción inválida.")
-
-        input("\nPresione ENTER para continuar...")
+            print(
+            "\nERROR: Opción inválida. "
+            "Debe seleccionar una opción del 0 al 11."
+            )
 
 
 # EJECUTAR

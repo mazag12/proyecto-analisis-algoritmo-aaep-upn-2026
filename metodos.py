@@ -13,7 +13,7 @@ import time
 equipos = [
     {
         "id": 1,
-        "codigo": "PC-001",
+        "codigo": "1001",
         "tipo": "Computadora",
         "marca": "Lenovo",
         "modelo": "ThinkCentre",
@@ -22,7 +22,7 @@ equipos = [
     },
     {
         "id": 2,
-        "codigo": "LAP-002",
+        "codigo": "1002",
         "tipo": "Laptop",
         "marca": "HP",
         "modelo": "ProBook",
@@ -31,7 +31,7 @@ equipos = [
     },
     {
         "id": 3,
-        "codigo": "PC-003",
+        "codigo": "1003",
         "tipo": "Computadora",
         "marca": "Dell",
         "modelo": "OptiPlex",
@@ -44,7 +44,7 @@ equipos = [
 incidencias = [
     {
         "id": 1,
-        "codigo_equipo": "PC-001",
+        "codigo_equipo": "1001",
         "problema": "No enciende",
         "tipo_mantenimiento": "Correctivo",
         "prioridad": 5,
@@ -53,7 +53,7 @@ incidencias = [
     },
     {
         "id": 2,
-        "codigo_equipo": "LAP-002",
+        "codigo_equipo": "1002",
         "problema": "Temperatura elevada",
         "tipo_mantenimiento": "Predictivo",
         "prioridad": 4,
@@ -62,7 +62,7 @@ incidencias = [
     },
     {
         "id": 3,
-        "codigo_equipo": "PC-003",
+        "codigo_equipo": "1003",
         "problema": "Actualización de software",
         "tipo_mantenimiento": "Preventivo",
         "prioridad": 2,
@@ -147,6 +147,18 @@ def ordenar_por_tiempo(lista):
 # REGISTRAR EQUIPO
 
 def registrar_equipo(codigo, tipo, marca, modelo, usuario):
+    codigo = str(codigo).strip()
+    tipo = str(tipo).strip()
+    marca = str(marca).strip()
+    modelo = str(modelo).strip()
+    usuario = str(usuario).strip()
+
+    if (
+        not datos_equipo_validos(codigo, tipo, marca, modelo, usuario)
+        or buscar_equipo(codigo) is not None
+    ):
+        return False
+
     nuevo_id = len(equipos) + 1
 
     equipo = {
@@ -175,7 +187,15 @@ def registrar_incidencia(
 ):
     equipo = buscar_equipo(codigo)
 
-    if equipo is None:
+    if (
+        equipo is None
+        or not problema_valido(problema)
+        or not isinstance(prioridad, int)
+        or prioridad < 1
+        or prioridad > 5
+        or not isinstance(tiempo, int)
+        or tiempo < 1
+    ):
         return False
 
     nuevo_id = len(incidencias) + 1
@@ -414,6 +434,151 @@ def validar_texto(mensaje, campo):
         return valor
 
 
+def texto_valido(valor, permitir_numeros=False):
+    if not isinstance(valor, str):
+        return False
+
+    valor = valor.strip()
+
+    if valor == "" or len(valor) > 50:
+        return False
+
+    for caracter in valor:
+        if caracter == " ":
+            continue
+
+        if caracter.isalpha():
+            continue
+
+        if permitir_numeros and caracter.isdigit():
+            continue
+
+        return False
+
+    return True
+
+
+def datos_equipo_validos(codigo, tipo, marca, modelo, usuario):
+    return (
+        isinstance(codigo, str)
+        and codigo.isdigit()
+        and 1 <= len(codigo) <= 5
+        and texto_valido(tipo)
+        and texto_valido(marca)
+        and texto_valido(modelo, permitir_numeros=True)
+        and texto_valido(usuario)
+    )
+
+
+def validar_texto_equipo(mensaje, campo, permitir_numeros=False):
+    while True:
+        valor = input(mensaje).strip()
+
+        if valor == "":
+            print(f"ERROR: El campo {campo} no puede estar vacío.")
+            continue
+
+        if len(valor) < 3:
+            print(f"ERROR: El campo {campo} no puede ser menor de  3 caracteres.")
+            continue
+
+        if len(valor) > 50:
+            print(f"ERROR: El campo {campo} no puede superar los 50 caracteres.")
+            continue
+
+        if not texto_valido(valor, permitir_numeros):
+            if permitir_numeros:
+                regla = "solo letras, números y espacios"
+            else:
+                regla = "solo letras y espacios"
+
+            print(f"ERROR: El campo {campo} debe contener {regla}.")
+            continue
+
+        return valor
+
+
+def problema_valido(problema):
+    if not isinstance(problema, str):
+        return False
+
+    problema = problema.strip()
+
+    if len(problema) < 10 or len(problema) > 250:
+        return False
+
+    signos_permitidos = ",.;:!?¡¿-()/"
+
+    for caracter in problema:
+        if (
+            caracter.isspace()
+            or caracter.isalpha()
+            or caracter.isdigit()
+            or caracter in signos_permitidos
+        ):
+            continue
+
+        return False
+
+    return True
+
+
+def validar_problema():
+    while True:
+        problema = input(
+            "Problema (10-250 caracteres; letras, números y puntuación): "
+        ).strip()
+
+        if len(problema) < 10:
+            print("ERROR: El problema debe tener mínimo 10 caracteres.")
+            continue
+
+        if len(problema) > 250:
+            print(
+                f"ERROR: El problema tiene {len(problema)} caracteres. "
+                "El máximo permitido es de 250 caracteres."
+            )
+            continue
+
+        if not problema_valido(problema):
+            print(
+                "ERROR: Use letras, números, espacios y signos "
+                "de puntuación."
+            )
+            continue
+
+        return problema
+
+
+def validar_tiempo_estimado():
+    print("\nTiempo estimado")
+    print("Registre el tiempo como horas completas y minutos de 0 a 59.")
+    print("Ejemplo: 1 hora y 30 minutos = 90 minutos.")
+
+    while True:
+        horas = validar_entero("Horas: ", 0)
+        minutos = validar_entero("Minutos (0-59): ", 0, 59)
+
+        if horas == 0 and minutos == 0:
+            print("ERROR: El tiempo estimado debe ser mayor que cero.")
+            continue
+
+        return horas * 60 + minutos
+
+
+def confirmar_accion(mensaje):
+    while True:
+        respuesta = input(f"{mensaje} (S/N): ").strip().upper()
+
+        if respuesta in ("S", "SI", "SÍ"):
+            return True
+
+        if respuesta in ("N", "NO"):
+            return False
+
+        print("ERROR: Responda S para sí o N para no.")
+
+
 def validar_entero(mensaje, minimo=None, maximo=None):
     while True:
         valor = input(mensaje).strip()
@@ -462,6 +627,14 @@ def validar_codigo_nuevo():
 
         if codigo == "":
             print("ERROR: El código no puede estar vacío.")
+            continue
+
+        if not codigo.isdigit():
+            print("ERROR: El código debe contener solo números.")
+            continue
+
+        if len(codigo) > 5:
+            print("ERROR: El código no puede superar 5 caracteres.")
             continue
 
         if buscar_equipo(codigo) is not None:

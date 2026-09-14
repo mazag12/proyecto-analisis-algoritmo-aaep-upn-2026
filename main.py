@@ -67,25 +67,27 @@ def menu_registrar_equipo():
     print("=" * 50)
     print("             REGISTRAR EQUIPO")
     print("=" * 50)
+    print("Ingrese los datos del equipo. El código debe tener de 1 a 5 dígitos.")
 
     codigo = validar_codigo_nuevo()
 
-    tipo = validar_texto(
+    tipo = validar_texto_equipo(
         "Tipo: ",
         "tipo"
     )
 
-    marca = validar_texto(
+    marca = validar_texto_equipo(
         "Marca: ",
         "marca"
     )
 
-    modelo = validar_texto(
+    modelo = validar_texto_equipo(
         "Modelo: ",
-        "modelo"
+        "modelo",
+        permitir_numeros=True
     )
 
-    usuario = validar_texto(
+    usuario = validar_texto_equipo(
         "Usuario: ",
         "usuario"
     )
@@ -98,8 +100,14 @@ def menu_registrar_equipo():
         usuario
     )
 
-    print("\nEquipo registrado correctamente.")
-    print(f"ID asignado: {equipo['id']}")
+    if equipo and confirmar_accion("¿Confirmar registro del equipo?"):
+        print("\nEquipo registrado correctamente.")
+        print(f"ID asignado: {equipo['id']}")
+    elif equipo:
+        equipos.remove(equipo)
+        print("\nRegistro cancelado. No se guardó el equipo.")
+    else:
+        print("\nERROR: Los datos del equipo no son válidos.")
 
 
 # MENU REGISTRAR INCIDENCIA
@@ -110,15 +118,16 @@ def menu_registrar_incidencia():
     print("=" * 50)
     print("            REGISTRAR INCIDENCIA")
     print("=" * 50)
+    print("Complete los datos en orden. Puede cancelar antes de confirmar.")
 
     codigo = validar_codigo_equipo(
-        "Código del equipo: "
+        "Código del equipo (ejemplo: 1001): "
     )
+    equipo = buscar_equipo(codigo)
+    print(f"Equipo seleccionado: {equipo['tipo']} {equipo['marca']} - "
+          f"{equipo['usuario']}")
 
-    problema = validar_texto(
-        "Problema: ",
-        "problema"
-    )
+    problema = validar_problema()
 
     tipo = validar_tipo_mantenimiento()
 
@@ -135,10 +144,18 @@ def menu_registrar_incidencia():
         5
     )
 
-    tiempo = validar_entero(
-        "Tiempo estimado en minutos: ",
-        1
-    )
+    tiempo = validar_tiempo_estimado()
+
+    print("\nResumen de la incidencia")
+    print(f"Equipo    : {codigo}")
+    print(f"Problema  : {problema}")
+    print(f"Tipo      : {tipo}")
+    print(f"Prioridad : {prioridad}")
+    print(f"Tiempo    : {tiempo // 60} h {tiempo % 60} min")
+
+    if not confirmar_accion("¿Confirmar registro de la incidencia?"):
+        print("\nRegistro cancelado. No se guardó la incidencia.")
+        return
 
     resultado = registrar_incidencia(
         codigo,
@@ -153,6 +170,21 @@ def menu_registrar_incidencia():
         print(f"ID asignado: {resultado['id']}")
     else:
         print("\nERROR: No se pudo registrar la incidencia.")
+
+
+def mostrar_ayuda():
+    print("\n")
+    print("=" * 70)
+    print("                         AYUDA")
+    print("=" * 70)
+    print("1. Registrar equipo: código numérico de hasta 5 dígitos.")
+    print("2. Tipo, marca y usuario: letras, espacios y tildes; máximo 50.")
+    print("3. Modelo: letras, números y espacios; máximo 50.")
+    print("4. Registrar incidencia: primero seleccione un equipo existente.")
+    print("5. Problema: entre 10 y 250 caracteres, con puntuación común.")
+    print("6. Tiempo: indique horas y minutos. Ejemplo: 1 h y 30 min.")
+    print("7. En los resúmenes, responda S para guardar o N para cancelar.")
+    input("\nPresione ENTER para volver al menú...")
 
 
 # BUSCAR EQUIPO
@@ -387,6 +419,7 @@ def menu():
 9. Actualizar estado
 10. Mostrar estadísticas
 11. Demostración de algoritmos
+H. Ayuda
 0. Salir
 """)
 
@@ -435,6 +468,10 @@ def menu():
         elif opcion == "11":
 
             menu_demostracion()
+
+        elif opcion.upper() == "H":
+
+            mostrar_ayuda()
 
         elif opcion == "0":
 

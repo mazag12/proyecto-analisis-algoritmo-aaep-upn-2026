@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Tue Sep  8 21:08:08 2026
 
@@ -7,32 +6,34 @@ Created on Tue Sep  8 21:08:08 2026
 
 from metodos import *
 
-
-# MOSTRAR EQUIPOS
-
-
 def mostrar_equipos():
 
     print("\n")
-    print("=" * 70)
-    print("                 LISTA DE EQUIPOS")
-    print("=" * 70)
+    print("=" * 80)
+    print("LISTA DE EQUIPOS")
+    print("=" * 80)
+
+    if not equipos:
+
+        print(
+            "\nNo existen equipos registrados."
+        )
+
+        return
 
     for equipo in equipos:
 
         print(f"""
 ID       : {equipo['id']}
-Código   : {equipo['codigo']}
+SKU      : {equipo['sku']}
 Tipo     : {equipo['tipo']}
 Marca    : {equipo['marca']}
 Modelo   : {equipo['modelo']}
 Usuario  : {equipo['usuario']}
+Equipo   : {equipo['equipo']}
 Estado   : {equipo['estado']}
 ----------------------------------------
 """)
-
-
-# MOSTRAR INCIDENCIAS
 
 
 def mostrar_incidencias(lista=None):
@@ -42,96 +43,155 @@ def mostrar_incidencias(lista=None):
         lista = incidencias
 
     print("\n")
-    print("=" * 90)
-    print("                    INCIDENCIAS")
-    print("=" * 90)
+    print("=" * 100)
+    print("                           INCIDENCIAS")
+    print("=" * 100)
+
+    if not lista:
+
+        print(
+            "\nNo existen incidencias registradas."
+        )
+
+        return
 
     for incidencia in lista:
 
-        print(
-            f"ID: {incidencia['id']} | "
-            f"Equipo: {incidencia['codigo_equipo']} | "
-            f"Problema: {incidencia['problema']} | "
-            f"Mantenimiento: {incidencia['tipo_mantenimiento']} | "
-            f"Prioridad: {incidencia['prioridad']} | "
-            f"Tiempo: {incidencia['tiempo_estimado']} min | "
-            f"Estado: {incidencia['estado']}"
-        )
-
-
-# MENU REGISTRAR EQUIPO
-
+        print(f"""
+ID                  : {incidencia['id']}
+SKU del equipo      : {incidencia['sku_equipo']}
+Problema            : {incidencia['problema']}
+Tipo mantenimiento  : {incidencia['tipo_mantenimiento']}
+Prioridad           : {incidencia['prioridad']}
+Tiempo estimado     : {incidencia['tiempo_estimado']} minutos
+Estado              : {incidencia['estado']}
+----------------------------------------
+""")
 
 def menu_registrar_equipo():
+
     print("\n")
-    print("=" * 50)
-    print("             REGISTRAR EQUIPO")
-    print("=" * 50)
-    print("Ingrese los datos del equipo. El código debe tener de 1 a 5 dígitos.")
+    print("=" * 70)
+    print("                         REGISTRAR EQUIPO")
+    print("=" * 70)
+    
+    sku = validar_sku_nuevo()
+    tipo = validar_texto_equipo("Tipo: ", "tipo" )
+    marca = validar_texto_equipo( "Marca: ", "marca")
+    modelo = validar_modelo()
+    usuario = validar_usuario()
+    equipo = validar_texto_equipo("Equipo: ","equipo")
 
-    codigo = validar_codigo_nuevo()
+    print("\n")
+    print("=" * 70)
+    print("                         RESUMEN DEL EQUIPO")
+    print("=" * 70)
 
-    tipo = validar_texto_equipo(
-        "Tipo: ",
-        "tipo"
-    )
+    print(f"""
+SKU      : {sku}
+Tipo     : {tipo}
+Marca    : {marca}
+Modelo   : {modelo}
+Usuario  : {usuario}
+Equipo   : {equipo}
+Estado   : Operativo
+""")
 
-    marca = validar_texto_equipo(
-        "Marca: ",
-        "marca"
-    )
+    if not confirmar_accion("¿Confirmar registro del equipo?" ):
+        print("\nRegistro cancelado.")
 
-    modelo = validar_texto_equipo(
-        "Modelo: ",
-        "modelo",
-        permitir_numeros=True
-    )
+        print("No se guardó el equipo.")
 
-    usuario = validar_texto_equipo(
-        "Usuario: ",
-        "usuario"
-    )
+        return
 
-    equipo = registrar_equipo(
-        codigo,
+    resultado = registrar_equipo(
+        sku,
         tipo,
         marca,
         modelo,
-        usuario
+        usuario,
+        equipo
     )
 
-    if equipo and confirmar_accion("¿Confirmar registro del equipo?"):
-        print("\nEquipo registrado correctamente.")
-        print(f"ID asignado: {equipo['id']}")
-    elif equipo:
-        equipos.remove(equipo)
-        print("\nRegistro cancelado. No se guardó el equipo.")
+    if resultado:
+
+        print(
+            "\n✓ Equipo registrado correctamente."
+        )
+
+        print(
+            f"ID asignado: {resultado['id']}"
+        )
+
     else:
-        print("\nERROR: Los datos del equipo no son válidos.")
 
-
-# MENU REGISTRAR INCIDENCIA
-
+        print(
+            "\n⚠ ERROR: No se pudo registrar "
+            "el equipo."
+        )
 
 def menu_registrar_incidencia():
+
     print("\n")
-    print("=" * 50)
-    print("            REGISTRAR INCIDENCIA")
-    print("=" * 50)
-    print("Complete los datos en orden. Puede cancelar antes de confirmar.")
+    print("=" * 70)
+    print("                       REGISTRAR INCIDENCIA")
+    print("=" * 70)
 
-    codigo = validar_codigo_equipo(
-        "Código del equipo (ejemplo: 1001): "
+    print("""
+ANTES DE COMENZAR
+
+Para registrar una incidencia:
+
+1. Debe seleccionar un SKU existente.
+2. Describa el problema.
+3. Seleccione el mantenimiento.
+4. Seleccione la prioridad.
+5. Indique el tiempo estimado.
+6. Confirme el registro.
+""")
+
+    sku = validar_sku_equipo()
+
+    equipo = buscar_equipo(sku)
+
+    print("\n✓ EQUIPO SELECCIONADO")
+
+    print(
+        f"SKU     : {equipo['sku']}"
     )
-    equipo = buscar_equipo(codigo)
-    print(f"Equipo seleccionado: {equipo['tipo']} {equipo['marca']} - "
-          f"{equipo['usuario']}")
 
+    print(
+        f"Tipo    : {equipo['tipo']}"
+    )
+
+    print(
+        f"Marca   : {equipo['marca']}"
+    )
+
+    print(
+        f"Modelo  : {equipo['modelo']}"
+    )
+
+    print(
+        f"Usuario : {equipo['usuario']}"
+    )
+
+    
     problema = validar_problema()
 
+    
     tipo = validar_tipo_mantenimiento()
 
-    print("\nPrioridad")
+    
+    print("\n")
+    print(
+        "¿Qué debe ingresar en Prioridad?"
+    )
+
+    print(
+        "Seleccione una opción:"
+    )
+
     print("1. Baja")
     print("2. Media")
     print("3. Normal")
@@ -144,21 +204,40 @@ def menu_registrar_incidencia():
         5
     )
 
+    
     tiempo = validar_tiempo_estimado()
 
-    print("\nResumen de la incidencia")
-    print(f"Equipo    : {codigo}")
-    print(f"Problema  : {problema}")
-    print(f"Tipo      : {tipo}")
-    print(f"Prioridad : {prioridad}")
-    print(f"Tiempo    : {tiempo // 60} h {tiempo % 60} min")
+    
+    print("\n")
+    print("=" * 70)
+    print("                    RESUMEN DE LA INCIDENCIA")
+    print("=" * 70)
 
-    if not confirmar_accion("¿Confirmar registro de la incidencia?"):
-        print("\nRegistro cancelado. No se guardó la incidencia.")
+    print(f"""
+SKU equipo : {sku}
+Problema   : {problema}
+Tipo       : {tipo}
+Prioridad  : {prioridad}
+Tiempo     : {tiempo // 60} h {tiempo % 60} min
+Estado     : Pendiente
+""")
+
+    if not confirmar_accion(
+        "¿Confirmar registro de la incidencia?"
+    ):
+
+        print(
+            "\nRegistro cancelado."
+        )
+
+        print(
+            "No se guardó la incidencia."
+        )
+
         return
 
     resultado = registrar_incidencia(
-        codigo,
+        sku,
         problema,
         tipo,
         prioridad,
@@ -166,59 +245,88 @@ def menu_registrar_incidencia():
     )
 
     if resultado:
-        print("\nIncidencia registrada correctamente.")
-        print(f"ID asignado: {resultado['id']}")
+
+        print(
+            "\n✓ Incidencia registrada correctamente."
+        )
+
+        print(
+            f"ID asignado: {resultado['id']}"
+        )
+
     else:
-        print("\nERROR: No se pudo registrar la incidencia.")
 
+        print(
+            "\n⚠ ERROR: No se pudo registrar "
+            "la incidencia."
+        )
 
-def mostrar_ayuda():
-    print("\n")
-    print("=" * 70)
-    print("                         AYUDA")
-    print("=" * 70)
-    print("1. Registrar equipo: código numérico de hasta 5 dígitos.")
-    print("2. Tipo, marca y usuario: letras, espacios y tildes; máximo 50.")
-    print("3. Modelo: letras, números y espacios; máximo 50.")
-    print("4. Registrar incidencia: primero seleccione un equipo existente.")
-    print("5. Problema: entre 10 y 250 caracteres, con puntuación común.")
-    print("6. Tiempo: indique horas y minutos. Ejemplo: 1 h y 30 min.")
-    print("7. En los resúmenes, responda S para guardar o N para cancelar.")
-    input("\nPresione ENTER para volver al menú...")
-
-
-# BUSCAR EQUIPO
 
 
 def menu_buscar():
 
     print("\n")
-    print("=" * 50)
-    print("               BUSCAR EQUIPO")
-    print("=" * 50)
+    print("=" * 60)
+    print("                         BUSCAR EQUIPO")
+    print("=" * 60)
 
-    codigo = input("Código del equipo: ")
+    print("""
+Ingrese el SKU del equipo que desea buscar.
 
-    resultado = buscar_equipo(codigo)
+Ejemplo:
+PC1001
+""")
+
+    sku = input(
+        "SKU: "
+    ).strip().upper()
+
+    resultado = buscar_equipo(sku)
 
     if resultado:
 
-        print("\nEquipo encontrado:")
+        print("\n✓ Equipo encontrado:")
 
-        print(f"ID      : {resultado['id']}")
-        print(f"Código  : {resultado['codigo']}")
-        print(f"Tipo    : {resultado['tipo']}")
-        print(f"Marca   : {resultado['marca']}")
-        print(f"Modelo  : {resultado['modelo']}")
-        print(f"Usuario : {resultado['usuario']}")
-        print(f"Estado  : {resultado['estado']}")
+        print(
+            f"ID      : {resultado['id']}"
+        )
+
+        print(
+            f"SKU     : {resultado['sku']}"
+        )
+
+        print(
+            f"Tipo    : {resultado['tipo']}"
+        )
+
+        print(
+            f"Marca   : {resultado['marca']}"
+        )
+
+        print(
+            f"Modelo  : {resultado['modelo']}"
+        )
+
+        print(
+            f"Usuario : {resultado['usuario']}"
+        )
+
+        print(
+            f"Equipo  : {resultado['equipo']}"
+        )
+
+        print(
+            f"Estado  : {resultado['estado']}"
+        )
 
     else:
 
-        print("\nEquipo no encontrado.")
+        print(
+            f"\nALERTA: No existe un equipo "
+            f"con SKU '{sku}'."
+        )
 
 
-# ORDENAR POR PRIORIDAD
 
 def menu_ordenar_prioridad():
 
@@ -226,7 +334,9 @@ def menu_ordenar_prioridad():
 
     print("\n")
     print("=" * 80)
-    print("          INCIDENCIAS ORDENADAS POR PRIORIDAD")
+    print(
+        "          INCIDENCIAS ORDENADAS POR PRIORIDAD"
+    )
     print("=" * 80)
 
     mostrar_incidencias(resultado)
@@ -236,22 +346,43 @@ def menu_ordenar_prioridad():
         f"{tiempo:.8f} segundos"
     )
 
+    print("""
+MÉTODO UTILIZADO
 
-# ORDENAR POR TIEMPO
+Ordenamiento Burbuja (Bubble Sort).
+
+El algoritmo:
+1. Compara elementos consecutivos.
+2. Compara sus prioridades.
+3. Intercambia los elementos cuando corresponde.
+4. Repite el proceso hasta ordenar la lista.
+
+Orden utilizado: descendente.
+""")
+
+
 
 def menu_ordenar_tiempo():
 
-    inicio = __import__("time").perf_counter()
+    inicio = __import__(
+        "time"
+    ).perf_counter()
 
-    resultado = ordenar_por_tiempo(incidencias)
+    resultado = ordenar_por_tiempo(
+        incidencias
+    )
 
-    fin = __import__("time").perf_counter()
+    fin = __import__(
+        "time"
+    ).perf_counter()
 
     tiempo = fin - inicio
 
     print("\n")
     print("=" * 80)
-    print("          INCIDENCIAS ORDENADAS POR TIEMPO")
+    print(
+        "             INCIDENCIAS ORDENADAS POR TIEMPO"
+    )
     print("=" * 80)
 
     mostrar_incidencias(resultado)
@@ -261,8 +392,18 @@ def menu_ordenar_tiempo():
         f"{tiempo:.8f} segundos"
     )
 
+    print("""
+MÉTODO UTILIZADO
 
-# PLANIFICAR
+Ordenamiento Burbuja (Bubble Sort).
+
+Se comparan los tiempos estimados
+de dos incidencias consecutivas.
+
+Orden utilizado: ascendente.
+""")
+
+
 
 def menu_planificar():
 
@@ -270,16 +411,22 @@ def menu_planificar():
 
     print("\n")
     print("=" * 80)
-    print("             PLANIFICACIÓN DE MANTENIMIENTO")
+    print(
+        "                  PLANIFICACIÓN DE MANTENIMIENTO"
+    )
     print("=" * 80)
 
     if len(resultado) == 0:
 
-        print("\nNo existen incidencias pendientes.")
+        print(
+            "\nNo existen incidencias pendientes."
+        )
 
         return
 
-    print("\nOrden recomendado de atención:\n")
+    print(
+        "\nOrden de atención:\n"
+    )
 
     posicion = 1
 
@@ -287,7 +434,7 @@ def menu_planificar():
 
         print(
             f"{posicion}. "
-            f"Equipo: {incidencia['codigo_equipo']} | "
+            f"SKU: {incidencia['sku_equipo']} | "
             f"Problema: {incidencia['problema']} | "
             f"Prioridad: {incidencia['prioridad']} | "
             f"Tiempo: {incidencia['tiempo_estimado']} min"
@@ -295,28 +442,45 @@ def menu_planificar():
 
         posicion += 1
 
+    print("""
+MÉTODO UTILIZADO
 
-# ACTUALIZAR ESTADO
+1. Se filtran las incidencias pendientes.
+2. Se aplica Ordenamiento Burbuja.
+3. Se ordenan por prioridad descendente.
+""")
+
+
 
 def menu_actualizar_estado():
+
     print("\n")
-    print("=" * 50)
-    print("             ACTUALIZAR ESTADO")
-    print("=" * 50)
+    print("=" * 60)
+    print("                    ACTUALIZAR ESTADO")
+    print("=" * 60)
 
     id_incidencia = validar_entero(
         "ID de incidencia: ",
         1
     )
 
-    incidencia = buscar_incidencia(id_incidencia)
+    incidencia = buscar_incidencia(
+        id_incidencia
+    )
 
     if incidencia is None:
+
         print(
-            f"\nERROR: No existe una incidencia con ID "
-            f"{id_incidencia}."
+            f"\nALERTA: No existe una incidencia "
+            f"con ID {id_incidencia}."
         )
+
         return
+
+    print(
+        f"\nEstado actual: "
+        f"{incidencia['estado']}"
+    )
 
     nuevo_estado = validar_estado()
 
@@ -326,41 +490,63 @@ def menu_actualizar_estado():
     )
 
     if resultado:
-        print("\nEstado actualizado correctamente.")
-        print(f"Nuevo estado: {nuevo_estado}")
+
+        print(
+            "\n✓ Estado actualizado correctamente."
+        )
+
+        print(
+            f"Nuevo estado: {nuevo_estado}"
+        )
+
     else:
-        print("\nERROR: No se pudo actualizar el estado.")
+
+        print(
+            "\nERROR: No se pudo actualizar "
+            "el estado."
+        )
 
 
-# ESTADISTICAS
 
 def menu_estadisticas():
 
     datos = obtener_estadisticas()
 
     print("\n")
-    print("=" * 60)
-    print("                  ESTADÍSTICAS")
-    print("=" * 60)
+    print("=" * 70)
+    print("                         ESTADÍSTICAS")
+    print("=" * 70)
 
-    print(f"""
-Total de equipos       : {datos['total_equipos']}
-Total de incidencias   : {datos['total_incidencias']}
+    print(
+        f"""
+        Total de equipos       : {datos['total_equipos']}
+        Total de incidencias   : {datos['total_incidencias']}
 
-Pendientes             : {datos['pendientes']}
-En proceso             : {datos['proceso']}
-Finalizadas            : {datos['finalizadas']}
+        Pendientes             : {datos['pendientes']}
+        En proceso             : {datos['proceso']}
+        Finalizadas            : {datos['finalizadas']}
 
-Preventivo             : {datos['preventivo']}
-Correctivo             : {datos['correctivo']}
-Predictivo             : {datos['predictivo']}
+        Preventivo             : {datos['preventivo']}
+        Correctivo             : {datos['correctivo']}
+        Predictivo             : {datos['predictivo']}
 
-Tiempo total           : {datos['tiempo_total']} minutos
-Tiempo promedio        : {datos['promedio']:.2f} minutos
-""")
+        Tiempo total           : {datos['tiempo_total']} minutos
+        Tiempo promedio        : {datos['promedio']:.2f} minutos
+        """
+    )
+
+    print("""
+    MÉTODOS UTILIZADOS
+
+    - Recorrido secuencial de listas.
+    - Conteo de registros.
+    - Conteo por estado.
+    - Conteo por tipo de mantenimiento.
+    - Acumulación del tiempo.
+    - Cálculo del promedio.
+    """)
 
 
-# DEMOSTRACION
 
 def menu_demostracion():
 
@@ -373,57 +559,176 @@ def menu_demostracion():
     tiempo_descendente = resultado[4]
 
     print("\n")
-    print("=" * 70)
-    print("              DEMOSTRACIÓN DE ALGORITMOS")
-    print("=" * 70)
+    print("=" * 80)
+    print(
+        "                    DEMOSTRACIÓN DE ALGORITMOS"
+    )
+    print("=" * 80)
 
-    print("\nLista original:")
-    print(original)
+    print("""
+        ALGORITMO UTILIZADO
+        ===================
 
-    print("\nOrdenamiento ascendente:")
-    print(ascendente)
+        ORDENAMIENTO BURBUJA
+        (BUBBLE SORT)
+
+        El algoritmo compara elementos consecutivos
+        y los intercambia cuando están en un orden
+        incorrecto.
+
+        Este proceso se repite hasta ordenar
+        completamente la lista.
+        """)
 
     print(
-        f"Tiempo: {tiempo_ascendente:.8f} segundos"
+        "\nLista original:"
     )
 
-    print("\nOrdenamiento descendente:")
+    print(
+        original
+    )
+
+    print(
+        "\nLista ordenada ascendentemente:"
+    )
+
+    print(
+        ascendente
+    )
+
+    print(f"\nTiempo ascendente: "
+        f"{tiempo_ascendente:.8f} segundos")
+
+    print("\nLista ordenada descendentemente:")
+
     print(descendente)
 
-    print(
-        f"Tiempo: {tiempo_descendente:.8f} segundos"
+    print(f"\nTiempo descendente: "
+        f"{tiempo_descendente:.8f} segundos"
     )
 
+    print("""
+        ================================================
+        MÉTODOS UTILIZADOS EN EL SISTEMA
+        ================================================
 
-# MENU PRINCIPAL
+        1. BÚSQUEDA SECUENCIAL
+        Se utiliza para buscar equipos e incidencias.
+
+        2. ORDENAMIENTO BURBUJA
+        Se utiliza para ordenar incidencias
+        por prioridad y tiempo.
+
+        3. RECORRIDO DE LISTAS
+        Se utiliza para mostrar registros
+        y generar estadísticas.
+
+        4. VALIDACIÓN DE DATOS
+        Controla los datos ingresados por el usuario.
+
+        5. MEDICIÓN DE TIEMPO
+        Se utiliza time.perf_counter()
+        para medir la ejecución de los algoritmos.
+    """)
+
+
+
+def mostrar_ayuda():
+
+    print("\n")
+    print("=" * 80)
+    print("                              AYUDA")
+    print("=" * 80)
+
+    print("""
+REGISTRO DE EQUIPOS
+===================
+SKU:
+- Letras y números.
+- Sin espacios.
+- Sin guiones.
+- Sin tildes.
+- Sin caracteres especiales.
+- Debe ser único.
+Ejemplo:
+PC1001
+TIPO:
+- Campo obligatorio.
+- No puede estar vacío.
+MARCA:
+- Campo obligatorio.
+- No puede estar vacío.
+MODELO:
+- Letras y números.
+- Sin espacios.
+- Sin caracteres especiales.
+USUARIO:
+- Letras.
+- Números.
+- Caracteres especiales.
+- Sin espacios.
+EQUIPO:
+- Identificación o descripción del equipo.
+ESTADO DEL EQUIPO:
+- Operativo.
+- Inoperativo.
+REGISTRO DE INCIDENCIAS
+=======================
+SKU DEL EQUIPO:
+- Debe corresponder a un equipo existente.
+
+PROBLEMA:
+- Mínimo 10 caracteres.
+- Máximo 250 caracteres.
+
+TIPO DE MANTENIMIENTO:
+- Preventivo.
+- Correctivo.
+- Predictivo.
+
+PRIORIDAD:
+    1. Baja
+    2. Media
+    3. Normal
+    4. Alta
+    5. Crítica
+
+
+    ESTADO DE INCIDENCIA:
+    1. Pendiente
+    2. En proceso
+    3. Finalizado
+    """)
+    input("\nPresione ENTER para volver al menú...")
+
+
 
 def menu():
 
     while True:
-
         print("\n\n")
-
-        print("=" * 70)
-        print("       SISTEMA DE MANTENIMIENTO DE EQUIPOS INFORMÁTICOS")
-        print("=" * 70)
-
+        print("=" * 80)
+        print("SISTEMA DE MANTENIMIENTO DE EQUIPOS INFORMÁTICOS")
+        print("=" * 80)
         print("""
-1. Registrar equipo
-2. Registrar incidencia
-3. Mostrar equipos
-4. Mostrar incidencias
-5. Buscar equipo
-6. Ordenar incidencias por prioridad
-7. Ordenar incidencias por tiempo
-8. Planificar mantenimiento
-9. Actualizar estado
-10. Mostrar estadísticas
-11. Demostración de algoritmos
-H. Ayuda
-0. Salir
-""")
+            1. Registrar equipo
+            2. Registrar incidencia
+            3. Mostrar equipos
+            4. Mostrar incidencias
+            5. Buscar equipo
+            6. Ordenar incidencias por prioridad
+            7. Ordenar incidencias por tiempo
+            8. Planificar mantenimiento
+            9. Actualizar estado
+            10. Mostrar estadísticas
+            11. Demostración de algoritmos
+            H. Ayuda
+            0. Salir
+        """)
 
-        opcion = input("Seleccione una opción: ").strip()
+        opcion = input(
+            "Seleccione una opción: "
+        ).strip()
 
         if opcion == "1":
 
@@ -475,19 +780,13 @@ H. Ayuda
 
         elif opcion == "0":
 
-            print("\nSistema finalizado.")
+            print("\nSistema finalizado." )
 
             break
 
         else:
-
-            print(
-            "\nERROR: Opción inválida. "
-            "Debe seleccionar una opción del 0 al 11."
-            )
-
-
-# EJECUTAR
+            print("\nALERTA: Opción inválida." )
+            print("Seleccione una opción del 0 al 11 o H para ayuda.")
 
 if __name__ == "__main__":
 

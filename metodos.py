@@ -1,51 +1,48 @@
-# -*- coding: utf-8 -*-
 """
 Created on Tue Sep  8 21:07:30 2026
 
 @author: MAZAG
 """
-
 import time
-
-
-# DATOS
 
 equipos = [
     {
         "id": 1,
-        "codigo": "1001",
+        "sku": "PC1001",
         "tipo": "Computadora",
         "marca": "Lenovo",
         "modelo": "ThinkCentre",
-        "usuario": "Carlos Perez",
+        "usuario": "CarlosPerez",
+        "equipo": "EquipoAdministrativo01",
         "estado": "Operativo"
     },
     {
         "id": 2,
-        "codigo": "1002",
+        "sku": "LAP1002",
         "tipo": "Laptop",
         "marca": "HP",
         "modelo": "ProBook",
-        "usuario": "Maria Lopez",
+        "usuario": "MariaLopez",
+        "equipo": "LaptopAdministrativa01",
         "estado": "Operativo"
     },
     {
         "id": 3,
-        "codigo": "1003",
+        "sku": "PC1003",
         "tipo": "Computadora",
         "marca": "Dell",
         "modelo": "OptiPlex",
-        "usuario": "Juan Torres",
+        "usuario": "JuanTorres",
+        "equipo": "EquipoContabilidad01",
         "estado": "Operativo"
     }
 ]
 
-
 incidencias = [
     {
         "id": 1,
-        "codigo_equipo": "1001",
-        "problema": "No enciende",
+        "sku_equipo": "PC1001",
+        "problema": "No enciende correctamente",
         "tipo_mantenimiento": "Correctivo",
         "prioridad": 5,
         "tiempo_estimado": 60,
@@ -53,8 +50,8 @@ incidencias = [
     },
     {
         "id": 2,
-        "codigo_equipo": "1002",
-        "problema": "Temperatura elevada",
+        "sku_equipo": "LAP1002",
+        "problema": "Temperatura elevada del equipo",
         "tipo_mantenimiento": "Predictivo",
         "prioridad": 4,
         "tiempo_estimado": 45,
@@ -62,8 +59,8 @@ incidencias = [
     },
     {
         "id": 3,
-        "codigo_equipo": "1003",
-        "problema": "Actualización de software",
+        "sku_equipo": "PC1003",
+        "problema": "Actualizacion de software pendiente",
         "tipo_mantenimiento": "Preventivo",
         "prioridad": 2,
         "tiempo_estimado": 30,
@@ -71,138 +68,237 @@ incidencias = [
     }
 ]
 
+def buscar_equipo(sku):
 
-# BUSQUEDA DE EQUIPO
-
-def buscar_equipo(codigo):
-    if not isinstance(codigo, str):
+    if not isinstance(sku, str):
         return None
 
-    codigo = codigo.strip().upper()
+    sku = sku.strip().upper()
 
     for equipo in equipos:
-        if equipo["codigo"].upper() == codigo:
+
+        if equipo["sku"].upper() == sku:
             return equipo
 
     return None
 
-
-# BUSQUEDA DE INCIDENCIA
 
 def buscar_incidencia(id_incidencia):
 
     for incidencia in incidencias:
 
         if incidencia["id"] == id_incidencia:
-
             return incidencia
 
     return None
 
+def sku_valido(sku):
 
-# ORDENAMIENTO BURBUJA DESCENDENTE
+    if not isinstance(sku, str):
+        return False
 
-def burbuja_descendente(lista):
+    if sku == "":
+        return False
 
-    lista = lista.copy()
-
-    n = len(lista)
-
-    for i in range(n):
-
-        for j in range(0, n - i - 1):
-
-            if lista[j]["prioridad"] < lista[j + 1]["prioridad"]:
-
-                lista[j], lista[j + 1] = (
-                    lista[j + 1],
-                    lista[j]
-                )
-
-    return lista
+    if len(sku) < 1 or len(sku) > 20:
+        return False
 
 
-# ORDENAMIENTO POR TIEMPO
+    for caracter in sku:
 
-def ordenar_por_tiempo(lista):
+        if not (
+            ("A" <= caracter <= "Z")
+            or ("a" <= caracter <= "z")
+            or ("0" <= caracter <= "9")
+        ):
+            return False
 
-    lista = lista.copy()
+    return True
 
-    n = len(lista)
+def modelo_valido(modelo):
 
-    for i in range(n):
+    if not isinstance(modelo, str):
+        return False
 
-        for j in range(0, n - i - 1):
+    if modelo == "":
+        return False
 
-            if lista[j]["tiempo_estimado"] > lista[j + 1]["tiempo_estimado"]:
-
-                lista[j], lista[j + 1] = (
-                    lista[j + 1],
-                    lista[j]
-                )
-
-    return lista
+    if len(modelo) < 1 or len(modelo) > 50:
+        return False
 
 
-# REGISTRAR EQUIPO
+    for caracter in modelo:
 
-def registrar_equipo(codigo, tipo, marca, modelo, usuario):
-    codigo = str(codigo).strip()
+        if not (
+            ("A" <= caracter <= "Z")
+            or ("a" <= caracter <= "z")
+            or ("0" <= caracter <= "9")
+        ):
+            return False
+
+    return True
+
+def usuario_valido(usuario):
+
+    if not isinstance(usuario, str):
+        return False
+
+    if usuario == "":
+        return False
+
+    if len(usuario) < 3 or len(usuario) > 50:
+        return False
+
+
+    if any(
+        caracter.isspace()
+        for caracter in usuario
+    ):
+        return False
+
+
+    return True
+
+def texto_valido(valor, campo):
+
+    if not isinstance(valor, str):
+        return False
+
+    valor = valor.strip()
+
+    if valor == "":
+        return False
+
+    if len(valor) < 3:
+        return False
+
+    if len(valor) > 50:
+        return False
+
+    return True
+
+def datos_equipo_validos(
+    sku,
+    tipo,
+    marca,
+    modelo,
+    usuario,
+    equipo
+):
+
+    return (
+        sku_valido(sku)
+        and texto_valido(tipo, "tipo")
+        and texto_valido(marca, "marca")
+        and modelo_valido(modelo)
+        and usuario_valido(usuario)
+        and texto_valido(equipo, "equipo")
+    )
+
+
+def registrar_equipo(
+    sku,
+    tipo,
+    marca,
+    modelo,
+    usuario,
+    equipo
+):
+
+    sku = str(sku).strip().upper()
     tipo = str(tipo).strip()
     marca = str(marca).strip()
     modelo = str(modelo).strip()
     usuario = str(usuario).strip()
+    equipo = str(equipo).strip()
 
-    if (
-        not datos_equipo_validos(codigo, tipo, marca, modelo, usuario)
-        or buscar_equipo(codigo) is not None
+    if not datos_equipo_validos(
+        sku,
+        tipo,
+        marca,
+        modelo,
+        usuario,
+        equipo
     ):
         return False
 
-    nuevo_id = len(equipos) + 1
 
-    equipo = {
+    if buscar_equipo(sku) is not None:
+        return False
+
+
+    nuevo_id = 1
+
+    if equipos:
+
+        nuevo_id = max(
+            equipo_reg["id"]
+            for equipo_reg in equipos
+        ) + 1
+
+    nuevo_equipo = {
         "id": nuevo_id,
-        "codigo": codigo,
+        "sku": sku,
         "tipo": tipo,
         "marca": marca,
         "modelo": modelo,
         "usuario": usuario,
+        "equipo": equipo,
         "estado": "Operativo"
     }
 
-    equipos.append(equipo)
+    equipos.append(nuevo_equipo)
 
-    return equipo
+    return nuevo_equipo
 
-
-# REGISTRAR INCIDENCIA
 
 def registrar_incidencia(
-    codigo,
+    sku,
     problema,
     tipo_mantenimiento,
     prioridad,
     tiempo
 ):
-    equipo = buscar_equipo(codigo)
 
-    if (
-        equipo is None
-        or not problema_valido(problema)
-        or not isinstance(prioridad, int)
-        or prioridad < 1
-        or prioridad > 5
-        or not isinstance(tiempo, int)
-        or tiempo < 1
+    equipo = buscar_equipo(sku)
+
+    if equipo is None:
+        return False
+
+    if not problema_valido(problema):
+        return False
+
+    if tipo_mantenimiento not in (
+        "Preventivo",
+        "Correctivo",
+        "Predictivo"
     ):
         return False
 
-    nuevo_id = len(incidencias) + 1
+    if not isinstance(prioridad, int):
+        return False
+
+    if prioridad < 1 or prioridad > 5:
+        return False
+
+    if not isinstance(tiempo, int):
+        return False
+
+    if tiempo < 1:
+        return False
+
+    nuevo_id = 1
+
+    if incidencias:
+
+        nuevo_id = max(
+            incidencia["id"]
+            for incidencia in incidencias
+        ) + 1
 
     incidencia = {
         "id": nuevo_id,
-        "codigo_equipo": codigo,
+        "sku_equipo": sku,
         "problema": problema,
         "tipo_mantenimiento": tipo_mantenimiento,
         "prioridad": prioridad,
@@ -212,47 +308,122 @@ def registrar_incidencia(
 
     incidencias.append(incidencia)
 
-    equipo["estado"] = "En mantenimiento"
+
+    equipo["estado"] = "Inoperativo"
 
     return incidencia
 
 
-# ACTUALIZAR ESTADO
+def problema_valido(problema):
 
-def actualizar_estado(id_incidencia, nuevo_estado):
-
-    incidencia = buscar_incidencia(id_incidencia)
-
-    if incidencia is None:
-
+    if not isinstance(problema, str):
         return False
 
-    incidencia["estado"] = nuevo_estado
+    problema = problema.strip()
 
-    if nuevo_estado == "Finalizado":
+    if len(problema) < 10:
+        return False
 
-        equipo = buscar_equipo(
-            incidencia["codigo_equipo"]
-        )
-
-        if equipo:
-
-            equipo["estado"] = "Operativo"
-
-    elif nuevo_estado == "En proceso":
-
-        equipo = buscar_equipo(
-            incidencia["codigo_equipo"]
-        )
-
-        if equipo:
-
-            equipo["estado"] = "En mantenimiento"
+    if len(problema) > 250:
+        return False
 
     return True
 
 
-# PLANIFICAR MANTENIMIENTO
+def actualizar_estado(
+    id_incidencia,
+    nuevo_estado
+):
+
+    incidencia = buscar_incidencia(
+        id_incidencia
+    )
+
+    if incidencia is None:
+        return False
+
+    estados_validos = (
+        "Pendiente",
+        "En proceso",
+        "Finalizado"
+    )
+
+    if nuevo_estado not in estados_validos:
+        return False
+
+    incidencia["estado"] = nuevo_estado
+
+    equipo = buscar_equipo(
+        incidencia["sku_equipo"]
+    )
+
+    if equipo:
+
+        if nuevo_estado == "Finalizado":
+
+            equipo["estado"] = "Operativo"
+
+        elif nuevo_estado in (
+            "Pendiente",
+            "En proceso"
+        ):
+
+            equipo["estado"] = "Inoperativo"
+
+    return True
+
+
+def burbuja_descendente(lista):
+
+    lista = lista.copy()
+
+    n = len(lista)
+
+    for i in range(n):
+
+        for j in range(
+            0,
+            n - i - 1
+        ):
+
+            if (
+                lista[j]["prioridad"]
+                < lista[j + 1]["prioridad"]
+            ):
+
+                lista[j], lista[j + 1] = (
+                    lista[j + 1],
+                    lista[j]
+                )
+
+    return lista
+
+
+def ordenar_por_tiempo(lista):
+
+    lista = lista.copy()
+
+    n = len(lista)
+
+    for i in range(n):
+
+        for j in range(
+            0,
+            n - i - 1
+        ):
+
+            if (
+                lista[j]["tiempo_estimado"]
+                > lista[j + 1]["tiempo_estimado"]
+            ):
+
+                lista[j], lista[j + 1] = (
+                    lista[j + 1],
+                    lista[j]
+                )
+
+    return lista
+
 
 def planificar_mantenimiento():
 
@@ -264,15 +435,18 @@ def planificar_mantenimiento():
 
             pendientes.append(incidencia)
 
-    return burbuja_descendente(pendientes)
+    return burbuja_descendente(
+        pendientes
+    )
 
-
-# ESTADISTICAS
 
 def obtener_estadisticas():
 
     total_equipos = len(equipos)
-    total_incidencias = len(incidencias)
+
+    total_incidencias = len(
+        incidencias
+    )
 
     pendientes = 0
     proceso = 0
@@ -286,7 +460,9 @@ def obtener_estadisticas():
 
     for incidencia in incidencias:
 
-        tiempo_total += incidencia["tiempo_estimado"]
+        tiempo_total += (
+            incidencia["tiempo_estimado"]
+        )
 
         if incidencia["estado"] == "Pendiente":
 
@@ -300,21 +476,33 @@ def obtener_estadisticas():
 
             finalizadas += 1
 
-        if incidencia["tipo_mantenimiento"] == "Preventivo":
+        if (
+            incidencia["tipo_mantenimiento"]
+            == "Preventivo"
+        ):
 
             preventivo += 1
 
-        elif incidencia["tipo_mantenimiento"] == "Correctivo":
+        elif (
+            incidencia["tipo_mantenimiento"]
+            == "Correctivo"
+        ):
 
             correctivo += 1
 
-        elif incidencia["tipo_mantenimiento"] == "Predictivo":
+        elif (
+            incidencia["tipo_mantenimiento"]
+            == "Predictivo"
+        ):
 
             predictivo += 1
 
     if total_incidencias > 0:
 
-        promedio = tiempo_total / total_incidencias
+        promedio = (
+            tiempo_total
+            / total_incidencias
+        )
 
     else:
 
@@ -334,15 +522,15 @@ def obtener_estadisticas():
     }
 
 
-# MEDIR TIEMPO DEL ALGORITMO
-
 def medir_ordenamiento():
 
     lista = incidencias.copy()
 
     inicio = time.perf_counter()
 
-    resultado = burbuja_descendente(lista)
+    resultado = burbuja_descendente(
+        lista
+    )
 
     fin = time.perf_counter()
 
@@ -351,15 +539,21 @@ def medir_ordenamiento():
     return resultado, tiempo
 
 
-# DEMOSTRACION DE ALGORITMOS
-
 def demostracion_algoritmos():
 
-    lista = [44, 55, 12, 42, 94, 18, 6, 67]
+    lista = [
+        44,
+        55,
+        12,
+        42,
+        94,
+        18,
+        6,
+        67
+    ]
 
     original = lista.copy()
 
-    # Ascendente
 
     ascendente = lista.copy()
 
@@ -369,9 +563,15 @@ def demostracion_algoritmos():
 
     for i in range(n):
 
-        for j in range(0, n - i - 1):
+        for j in range(
+            0,
+            n - i - 1
+        ):
 
-            if ascendente[j] > ascendente[j + 1]:
+            if (
+                ascendente[j]
+                > ascendente[j + 1]
+            ):
 
                 ascendente[j], ascendente[j + 1] = (
                     ascendente[j + 1],
@@ -380,19 +580,26 @@ def demostracion_algoritmos():
 
     fin = time.perf_counter()
 
-    tiempo_ascendente = fin - inicio
+    tiempo_ascendente = (
+        fin - inicio
+    )
 
-    # Descendente
 
     descendente = lista.copy()
 
     inicio = time.perf_counter()
 
-    descendente = burbuja_descendente_simple(descendente)
+    descendente = (
+        burbuja_descendente_simple(
+            descendente
+        )
+    )
 
     fin = time.perf_counter()
 
-    tiempo_descendente = fin - inicio
+    tiempo_descendente = (
+        fin - inicio
+    )
 
     return (
         original,
@@ -403,18 +610,21 @@ def demostracion_algoritmos():
     )
 
 
-# BURBUJA SIMPLE DESCENDENTE
-
-#Verificación de datos
 def burbuja_descendente_simple(lista):
 
     n = len(lista)
 
     for i in range(n):
 
-        for j in range(0, n - i - 1):
+        for j in range(
+            0,
+            n - i - 1
+        ):
 
-            if lista[j] < lista[j + 1]:
+            if (
+                lista[j]
+                < lista[j + 1]
+            ):
 
                 lista[j], lista[j + 1] = (
                     lista[j + 1],
@@ -423,237 +633,499 @@ def burbuja_descendente_simple(lista):
 
     return lista
 
-def validar_texto(mensaje, campo):
+
+def validar_texto_equipo(
+    mensaje,
+    campo
+):
+
     while True:
-        valor = input(mensaje).strip()
+
+        print()
+        print(
+            f"¿Qué debe ingresar en {campo}?"
+        )
+
+        print(
+            "- No puede estar vacío."
+        )
+
+        print(
+            "- Mínimo: 3 caracteres."
+        )
+
+        print(
+            "- Máximo: 50 caracteres."
+        )
+
+        valor = input(
+            f"Ingrese {campo}: "
+        ).strip()
 
         if valor == "":
-            print(f"ERROR: El campo {campo} no puede estar vacío.")
-            continue
 
-        return valor
+            print(
+                f"\n ALERTA: El campo "
+                f"'{campo}' no puede estar vacío."
+            )
 
-
-def texto_valido(valor, permitir_numeros=False):
-    if not isinstance(valor, str):
-        return False
-
-    valor = valor.strip()
-
-    if valor == "" or len(valor) > 50:
-        return False
-
-    for caracter in valor:
-        if caracter == " ":
-            continue
-
-        if caracter.isalpha():
-            continue
-
-        if permitir_numeros and caracter.isdigit():
-            continue
-
-        return False
-
-    return True
-
-
-def datos_equipo_validos(codigo, tipo, marca, modelo, usuario):
-    return (
-        isinstance(codigo, str)
-        and codigo.isdigit()
-        and 1 <= len(codigo) <= 5
-        and texto_valido(tipo)
-        and texto_valido(marca)
-        and texto_valido(modelo, permitir_numeros=True)
-        and texto_valido(usuario)
-    )
-
-
-def validar_texto_equipo(mensaje, campo, permitir_numeros=False):
-    while True:
-        valor = input(mensaje).strip()
-
-        if valor == "":
-            print(f"ERROR: El campo {campo} no puede estar vacío.")
             continue
 
         if len(valor) < 3:
-            print(f"ERROR: El campo {campo} no puede ser menor de  3 caracteres.")
+
+            print(
+                f"\n ALERTA: El campo "
+                f"'{campo}' debe tener mínimo "
+                f"3 caracteres."
+            )
+
             continue
 
         if len(valor) > 50:
-            print(f"ERROR: El campo {campo} no puede superar los 50 caracteres.")
+
+            print(
+                f"\n ALERTA: El campo "
+                f"'{campo}' no puede superar "
+                f"los 50 caracteres."
+            )
+
             continue
 
-        if not texto_valido(valor, permitir_numeros):
-            if permitir_numeros:
-                regla = "solo letras, números y espacios"
-            else:
-                regla = "solo letras y espacios"
+        if not texto_valido(
+            valor,
+            campo
+        ):
 
-            print(f"ERROR: El campo {campo} debe contener {regla}.")
+            print(
+                f"\n ALERTA: El valor ingresado "
+                f"para '{campo}' no es válido."
+            )
+
             continue
 
         return valor
 
 
-def problema_valido(problema):
-    if not isinstance(problema, str):
-        return False
+def validar_sku_nuevo():
 
-    problema = problema.strip()
+    while True:
 
-    if len(problema) < 10 or len(problema) > 250:
-        return False
+        print()
+        print("¿Qué debe ingresar en SKU?")
+        print("- Letras y números.")
+        print("- Sin espacios.")
+        print("- Sin guiones.")
+        print("- Sin tildes.")
+        print("- Sin caracteres especiales.")
+        print("- Debe ser único.")
 
-    signos_permitidos = ",.;:!?¡¿-()/"
+        print()
+        print("Ejemplos válidos:")
+        print("PC1001")
+        print("LAP2026")
+        print("EQABC01")
 
-    for caracter in problema:
-        if (
-            caracter.isspace()
-            or caracter.isalpha()
-            or caracter.isdigit()
-            or caracter in signos_permitidos
-        ):
+        sku = input(
+            "\nIngrese SKU: "
+        ).strip().upper()
+
+        if sku == "":
+
+            print(
+                "\n ALERTA: El SKU "
+                "no puede estar vacío."
+            )
+
             continue
 
-        return False
+        if not sku_valido(sku):
 
-    return True
+            print(
+                "\n ALERTA: SKU inválido."
+            )
+
+            print(
+                "Solo se permiten letras y números."
+            )
+
+            print(
+                "No se permiten espacios, "
+                "guiones ni caracteres especiales."
+            )
+
+            continue
+
+        if buscar_equipo(sku) is not None:
+
+            print(
+                f"\n ALERTA: El SKU '{sku}' "
+                "ya existe."
+            )
+
+            print(
+                "Debe ingresar un SKU diferente."
+            )
+
+            continue
+
+        return sku
+
+
+def validar_modelo():
+
+    while True:
+
+        print()
+        print("¿Qué debe ingresar en Modelo?")
+        print("- Letras y números.")
+        print("- Sin espacios.")
+        print("- Sin caracteres especiales.")
+
+        print()
+        print("Ejemplo:")
+        print("ThinkCentreM720")
+
+        modelo = input(
+            "\nIngrese Modelo: "
+        ).strip()
+
+        if modelo == "":
+
+            print(
+                "\n ALERTA: El modelo "
+                "no puede estar vacío."
+            )
+
+            continue
+
+        if not modelo_valido(modelo):
+
+            print(
+                "\n ALERTA: Modelo inválido."
+            )
+
+            print(
+                "El modelo solo debe contener "
+                "letras y números."
+            )
+
+            continue
+
+        return modelo
+
+
+def validar_usuario():
+
+    while True:
+
+        print()
+        print("¿Qué debe ingresar en Usuario?")
+        print("- Letras.")
+        print("- Números.")
+        print("- Caracteres especiales.")
+        print("- NO se permiten espacios.")
+
+        print()
+        print("Ejemplos:")
+        print("CarlosPerez")
+        print("usuario01")
+        print("user@empresa")
+
+        usuario = input(
+            "\nIngrese Usuario: "
+        ).strip()
+
+        if usuario == "":
+
+            print(
+                "\n ALERTA: El usuario "
+                "no puede estar vacío."
+            )
+
+            continue
+
+        if any(
+            caracter.isspace()
+            for caracter in usuario
+        ):
+
+            print(
+                "\n ALERTA: El usuario "
+                "no puede contener espacios."
+            )
+
+            continue
+
+        if len(usuario) < 3:
+
+            print(
+                "\n ALERTA: El usuario debe "
+                "tener mínimo 3 caracteres."
+            )
+
+            continue
+
+        if len(usuario) > 50:
+
+            print(
+                "\n ALERTA: El usuario no puede "
+                "superar los 50 caracteres."
+            )
+
+            continue
+
+        return usuario
+
+
+def validar_sku_equipo():
+
+    while True:
+
+        print()
+        print(
+            "¿Qué debe ingresar?"
+        )
+
+        print(
+            "- Ingrese el SKU de un equipo existente."
+        )
+
+        print(
+            "- Ejemplo: PC1001"
+        )
+
+        sku = input(
+            "\nIngrese SKU del equipo: "
+        ).strip().upper()
+
+        if sku == "":
+
+            print(
+                "\n ALERTA: El SKU "
+                "no puede estar vacío."
+            )
+
+            continue
+
+        if not sku_valido(sku):
+
+            print(
+                "\n ALERTA: El SKU "
+                "no tiene un formato válido."
+            )
+
+            continue
+
+        equipo = buscar_equipo(sku)
+
+        if equipo is None:
+
+            print(
+                f"\n ALERTA: No existe un equipo "
+                f"con SKU '{sku}'."
+            )
+
+            continue
+
+        return sku
 
 
 def validar_problema():
+
     while True:
+
+        print()
+        print("¿Qué debe ingresar en Problema?")
+        print("- Describa el problema del equipo.")
+        print("- Mínimo: 10 caracteres.")
+        print("- Máximo: 250 caracteres.")
+        print("- Puede utilizar letras, números, espacios y puntuación.")
+
         problema = input(
-            "Problema (10-250 caracteres; letras, números y puntuación): "
+            "\nIngrese Problema: "
         ).strip()
 
         if len(problema) < 10:
-            print("ERROR: El problema debe tener mínimo 10 caracteres.")
+
+            print(
+                "\n ALERTA: El problema debe "
+                "tener mínimo 10 caracteres."
+            )
+
             continue
 
         if len(problema) > 250:
+
             print(
-                f"ERROR: El problema tiene {len(problema)} caracteres. "
-                "El máximo permitido es de 250 caracteres."
+                "\n ALERTA: El problema no puede "
+                "superar los 250 caracteres."
             )
+
             continue
 
         if not problema_valido(problema):
+
             print(
-                "ERROR: Use letras, números, espacios y signos "
-                "de puntuación."
+                "\n ALERTA: El problema "
+                "no tiene un formato válido."
             )
+
             continue
 
         return problema
 
 
 def validar_tiempo_estimado():
-    print("\nTiempo estimado")
-    print("Registre el tiempo como horas completas y minutos de 0 a 59.")
-    print("Ejemplo: 1 hora y 30 minutos = 90 minutos.")
+
+    print()
+    print(
+        "¿Qué debe ingresar en Tiempo estimado?"
+    )
+
+    print(
+        "- Ingrese las horas."
+    )
+
+    print(
+        "- Ingrese los minutos."
+    )
+
+    print(
+        "- Los minutos deben estar entre 0 y 59."
+    )
+
+    print(
+        "- El tiempo debe ser mayor a cero."
+    )
 
     while True:
-        horas = validar_entero("Horas: ", 0)
-        minutos = validar_entero("Minutos (0-59): ", 0, 59)
+
+        horas = validar_entero(
+            "Horas: ",
+            0
+        )
+
+        minutos = validar_entero(
+            "Minutos (0-59): ",
+            0,
+            59
+        )
 
         if horas == 0 and minutos == 0:
-            print("ERROR: El tiempo estimado debe ser mayor que cero.")
+
+            print(
+                "\n ALERTA: El tiempo estimado "
+                "debe ser mayor que cero."
+            )
+
             continue
 
         return horas * 60 + minutos
 
 
-def confirmar_accion(mensaje):
+def validar_entero(
+    mensaje,
+    minimo=None,
+    maximo=None
+):
+
     while True:
-        respuesta = input(f"{mensaje} (S/N): ").strip().upper()
 
-        if respuesta in ("S", "SI", "SÍ"):
-            return True
-
-        if respuesta in ("N", "NO"):
-            return False
-
-        print("ERROR: Responda S para sí o N para no.")
-
-
-def validar_entero(mensaje, minimo=None, maximo=None):
-    while True:
         valor = input(mensaje).strip()
 
+        if valor == "":
+
+            print(
+                "\n ALERTA: El campo "
+                "no puede estar vacío."
+            )
+
+            continue
+
         try:
+
             numero = int(valor)
 
-            if minimo is not None and numero < minimo:
+            if (
+                minimo is not None
+                and numero < minimo
+            ):
+
                 print(
-                    f"ERROR: El valor debe ser mayor o igual a {minimo}."
+                    f"\n ALERTA: El valor debe "
+                    f"ser mayor o igual a {minimo}."
                 )
+
                 continue
 
-            if maximo is not None and numero > maximo:
+            if (
+                maximo is not None
+                and numero > maximo
+            ):
+
                 print(
-                    f"ERROR: El valor debe ser menor o igual a {maximo}."
+                    f"\n ALERTA: El valor debe "
+                    f"ser menor o igual a {maximo}."
                 )
+
                 continue
 
             return numero
 
         except ValueError:
-            print("ERROR: Debe ingresar un número entero válido.")
 
-
-def validar_codigo_equipo(mensaje):
-    while True:
-        codigo = input(mensaje).strip().upper()
-
-        if codigo == "":
-            print("ERROR: El código no puede estar vacío.")
-            continue
-
-        equipo = buscar_equipo(codigo)
-
-        if equipo is None:
-            print(f"ERROR: No existe el equipo con código '{codigo}'.")
-            continue
-
-        return codigo
-
-
-def validar_codigo_nuevo():
-    while True:
-        codigo = input("Código: ").strip().upper()
-
-        if codigo == "":
-            print("ERROR: El código no puede estar vacío.")
-            continue
-
-        if not codigo.isdigit():
-            print("ERROR: El código debe contener solo números.")
-            continue
-
-        if len(codigo) > 5:
-            print("ERROR: El código no puede superar 5 caracteres.")
-            continue
-
-        if buscar_equipo(codigo) is not None:
             print(
-                f"ERROR: Ya existe un equipo con el código '{codigo}'."
+                "\n ALERTA: Debe ingresar "
+                "un número entero válido."
             )
-            continue
 
-        return codigo
+
+def confirmar_accion(mensaje):
+
+    while True:
+
+        respuesta = input(
+            f"{mensaje} (S/N): "
+        ).strip().upper()
+
+        if respuesta in (
+            "S",
+            "SI",
+            "SÍ"
+        ):
+
+            return True
+
+        if respuesta in (
+            "N",
+            "NO"
+        ):
+
+            return False
+
+        print(
+            "\n ALERTA: Responda "
+            "S para sí o N para no."
+        )
 
 
 def validar_tipo_mantenimiento():
+
     while True:
-        print("\nTipo de mantenimiento")
+
+        print()
+        print(
+            "¿Qué tipo de mantenimiento "
+            "corresponde?"
+        )
+
         print("1. Preventivo")
         print("2. Correctivo")
         print("3. Predictivo")
 
-        opcion = input("Seleccione: ").strip()
+        opcion = input(
+            "\nSeleccione una opción: "
+        ).strip()
 
         tipos = {
             "1": "Preventivo",
@@ -662,19 +1134,31 @@ def validar_tipo_mantenimiento():
         }
 
         if opcion in tipos:
+
             return tipos[opcion]
 
-        print("ERROR: Seleccione una opción entre 1 y 3.")
+        print(
+            "\n ALERTA: Seleccione "
+            "una opción entre 1 y 3."
+        )
 
 
 def validar_estado():
+
     while True:
-        print("\nEstado de la incidencia")
+
+        print()
+        print(
+            "¿Qué estado desea asignar?"
+        )
+
         print("1. Pendiente")
         print("2. En proceso")
         print("3. Finalizado")
 
-        opcion = input("Seleccione: ").strip()
+        opcion = input(
+            "\nSeleccione una opción: "
+        ).strip()
 
         estados = {
             "1": "Pendiente",
@@ -683,6 +1167,10 @@ def validar_estado():
         }
 
         if opcion in estados:
+
             return estados[opcion]
 
-        print("ERROR: Seleccione una opción entre 1 y 3.")
+        print(
+            "\n ALERTA: Seleccione "
+            "una opción entre 1 y 3."
+        )

@@ -4,6 +4,8 @@ Created on Tue Sep  8 21:08:08 2026
 @author: MAZAG
 """
 
+import time
+
 from metodos import *
 
 def mostrar_equipos():
@@ -150,8 +152,9 @@ Para registrar una incidencia:
 6. Confirme el registro.
 """)
 
-    sku = validar_sku_equipo()
+    sku = validar_sku_equipo(solo_sin_incidencia_abierta=True)
 
+    # Búsqueda binaria confirma el equipo dentro de la lista ordenada por SKU.
     equipo = buscar_equipo(sku)
 
     print("\n✓ EQUIPO SELECCIONADO")
@@ -277,10 +280,15 @@ Ejemplo:
 PC1001
 """)
 
-    sku = input(
-        "SKU: "
-    ).strip().upper()
+    print("Pasos de la búsqueda binaria:")
+    print("1. Los equipos están ordenados por SKU.")
+    print("2. Se revisa el SKU que queda en el centro.")
+    print("3. Se conserva solo la mitad donde podría estar el equipo.")
+    print("4. Se repite hasta encontrarlo o quedarse sin opciones.")
 
+    sku = validar_sku_busqueda()
+
+    # Búsqueda binaria se invoca a través de buscar_equipo.
     resultado = buscar_equipo(sku)
 
     if resultado:
@@ -330,6 +338,7 @@ PC1001
 
 def menu_ordenar_prioridad():
 
+    # Bubble Sort ordena las incidencias de prioridad más alta a más baja.
     resultado, tiempo = medir_ordenamiento()
 
     print("\n")
@@ -347,34 +356,27 @@ def menu_ordenar_prioridad():
     )
 
     print("""
-MÉTODO UTILIZADO
+PASOS DE BUBBLE SORT
 
-Ordenamiento Burbuja (Bubble Sort).
+1. Se comparan dos incidencias vecinas.
+2. Si la de la izquierda tiene menor prioridad, se intercambian.
+3. Se repite el recorrido hasta que ya no haya cambios.
 
-El algoritmo:
-1. Compara elementos consecutivos.
-2. Compara sus prioridades.
-3. Intercambia los elementos cuando corresponde.
-4. Repite el proceso hasta ordenar la lista.
-
-Orden utilizado: descendente.
+Orden utilizado: prioridad más alta primero.
 """)
 
 
 
 def menu_ordenar_tiempo():
 
-    inicio = __import__(
-        "time"
-    ).perf_counter()
+    inicio = time.perf_counter()
 
+    # Bubble Sort ordena el tiempo estimado de menor a mayor.
     resultado = ordenar_por_tiempo(
         incidencias
     )
 
-    fin = __import__(
-        "time"
-    ).perf_counter()
+    fin = time.perf_counter()
 
     tiempo = fin - inicio
 
@@ -393,20 +395,20 @@ def menu_ordenar_tiempo():
     )
 
     print("""
-MÉTODO UTILIZADO
+PASOS DE BUBBLE SORT
 
-Ordenamiento Burbuja (Bubble Sort).
+1. Se comparan los minutos de dos incidencias vecinas.
+2. Si la primera tarda más, se intercambian.
+3. Se repite hasta que el menor tiempo quede primero.
 
-Se comparan los tiempos estimados
-de dos incidencias consecutivas.
-
-Orden utilizado: ascendente.
+Orden utilizado: menor tiempo primero.
 """)
 
 
 
 def menu_planificar():
 
+    # El algoritmo voraz elige sucesivamente la mejor incidencia pendiente.
     resultado = planificar_mantenimiento()
 
     print("\n")
@@ -443,11 +445,15 @@ def menu_planificar():
         posicion += 1
 
     print("""
-MÉTODO UTILIZADO
+PASOS DEL ALGORITMO VORAZ
 
-1. Se filtran las incidencias pendientes.
-2. Se aplica Ordenamiento Burbuja.
-3. Se ordenan por prioridad descendente.
+1. Se consideran solo las incidencias pendientes.
+2. Se elige la de mayor prioridad disponible.
+3. Si empatan, se elige la de menor duración y luego el menor ID.
+4. Se repite con las incidencias restantes.
+
+Es una regla práctica de atención; no promete el mejor resultado
+posible para todos los escenarios.
 """)
 
 
@@ -550,13 +556,8 @@ def menu_estadisticas():
 
 def menu_demostracion():
 
+    # Presenta resultados de las invocaciones de los tres algoritmos.
     resultado = demostracion_algoritmos()
-
-    original = resultado[0]
-    ascendente = resultado[1]
-    tiempo_ascendente = resultado[2]
-    descendente = resultado[3]
-    tiempo_descendente = resultado[4]
 
     print("\n")
     print("=" * 80)
@@ -566,139 +567,81 @@ def menu_demostracion():
     print("=" * 80)
 
     print("""
-        ALGORITMO UTILIZADO
-        ===================
-
-        ORDENAMIENTO BURBUJA
-        (BUBBLE SORT)
-
-        El algoritmo compara elementos consecutivos
-        y los intercambia cuando están en un orden
-        incorrecto.
-
-        Este proceso se repite hasta ordenar
-        completamente la lista.
-        """)
-
-    print(
-        "\nLista original:"
-    )
-
-    print(
-        original
-    )
-
-    print(
-        "\nLista ordenada ascendentemente:"
-    )
-
-    print(
-        ascendente
-    )
-
-    print(f"\nTiempo ascendente: "
-        f"{tiempo_ascendente:.8f} segundos")
-
-    print("\nLista ordenada descendentemente:")
-
-    print(descendente)
-
-    print(f"\nTiempo descendente: "
-        f"{tiempo_descendente:.8f} segundos"
-    )
+ALGORITMO 1: BUBBLE SORT (ORDENAMIENTO BURBUJA)
+1. Se parte de una lista de números.
+2. Se comparan dos números vecinos.
+3. Si están en el orden equivocado, se cambian de lugar.
+4. Se repite hasta que toda la lista queda ordenada.
+""")
+    print("Lista original:", resultado["numeros_originales"])
+    print("De menor a mayor:", resultado["numeros_ascendentes"])
+    print("De mayor a menor:", resultado["numeros_descendentes"])
+    print(f"Tiempo ascendente: {resultado['tiempo_ascendente']:.8f} segundos")
+    print(f"Tiempo descendente: {resultado['tiempo_descendente']:.8f} segundos")
 
     print("""
-        ================================================
-        MÉTODOS UTILIZADOS EN EL SISTEMA
-        ================================================
+ALGORITMO 2: BÚSQUEDA BINARIA
+1. La lista de equipos debe estar ordenada por SKU.
+2. Se revisa el SKU que queda en el centro.
+3. Se descarta la mitad donde no puede estar el buscado.
+4. Se repite hasta encontrarlo o terminar la lista.
+""")
+    print(f"SKU buscado: {resultado['sku_demo']}")
+    print(f"SKU revisados: {resultado['recorrido_busqueda']}")
+    if resultado["equipo_encontrado"]:
+        print(
+            "Resultado: equipo encontrado, "
+            f"{resultado['equipo_encontrado']['sku']}."
+        )
+    else:
+        print("Resultado: no se encontró el equipo.")
 
-        1. BÚSQUEDA SECUENCIAL
-        Se utiliza para buscar equipos e incidencias.
+    print("""
+ALGORITMO 3: MÉTODO VORAZ
+1. Se toman las incidencias pendientes.
+2. Se elige la de mayor prioridad disponible.
+3. En empate, gana la de menor duración y luego el menor ID.
+4. Se repite hasta completar el orden de atención.
+""")
+    if resultado["plan_voraz"]:
+        for posicion, incidencia in enumerate(resultado["plan_voraz"], 1):
+            print(
+                f"{posicion}. ID {incidencia['id']} | "
+                f"prioridad {incidencia['prioridad']} | "
+                f"{incidencia['tiempo_estimado']} min"
+            )
+    else:
+        print("No hay incidencias pendientes para planificar.")
 
-        2. ORDENAMIENTO BURBUJA
-        Se utiliza para ordenar incidencias
-        por prioridad y tiempo.
-
-        3. RECORRIDO DE LISTAS
-        Se utiliza para mostrar registros
-        y generar estadísticas.
-
-        4. VALIDACIÓN DE DATOS
-        Controla los datos ingresados por el usuario.
-
-        5. MEDICIÓN DE TIEMPO
-        Se utiliza time.perf_counter()
-        para medir la ejecución de los algoritmos.
-    """)
-
+    print("""
+Estos algoritmos apoyan la búsqueda de equipos, el orden de incidencias
+y la propuesta de atención. Cada uno elige o compara datos de una forma
+distinta, explicada paso a paso arriba.
+""")
 
 
 def mostrar_ayuda():
 
-    print("\n")
-    print("=" * 80)
-    print("                              AYUDA")
-    print("=" * 80)
-
     print("""
-REGISTRO DE EQUIPOS
-===================
-SKU:
-- Letras y números.
-- Sin espacios.
-- Sin guiones.
-- Sin tildes.
-- Sin caracteres especiales.
-- Debe ser único.
-Ejemplo:
-PC1001
-TIPO:
-- Campo obligatorio.
-- No puede estar vacío.
-MARCA:
-- Campo obligatorio.
-- No puede estar vacío.
-MODELO:
-- Letras y números.
-- Sin espacios.
-- Sin caracteres especiales.
-USUARIO:
-- Letras.
-- Números.
-- Caracteres especiales.
-- Sin espacios.
-EQUIPO:
-- Identificación o descripción del equipo.
-ESTADO DEL EQUIPO:
-- Operativo.
-- Inoperativo.
-REGISTRO DE INCIDENCIAS
-=======================
-SKU DEL EQUIPO:
-- Debe corresponder a un equipo existente.
+AYUDA Y REGLAS DE INGRESO
 
-PROBLEMA:
-- Mínimo 10 caracteres.
-- Máximo 250 caracteres.
+EQUIPOS
+- SKU: letras y números, de 1 a 20 caracteres, único.
+- Tipo: de 3 a 50 letras; puede incluir espacios y guion.
+- Marca: de 1 a 50 letras o números; puede incluir espacios, &, punto y guion.
+- Modelo: de 1 a 50 letras o números; puede incluir espacios, punto, _, / y -.
+- Usuario: de 3 a 50 caracteres, sin espacios; letras, números, ., _, @ y -.
+- Identificación del equipo: de 3 a 50 letras o números; admite espacios y _ . / -.
+- El equipo queda Operativo o En mantenimiento.
 
-TIPO DE MANTENIMIENTO:
-- Preventivo.
-- Correctivo.
-- Predictivo.
-
-PRIORIDAD:
-    1. Baja
-    2. Media
-    3. Normal
-    4. Alta
-    5. Crítica
-
-
-    ESTADO DE INCIDENCIA:
-    1. Pendiente
-    2. En proceso
-    3. Finalizado
-    """)
+INCIDENCIAS
+- Deben apuntar a un SKU existente sin otra incidencia abierta.
+- El problema debe tener entre 10 y 250 caracteres.
+- Mantenimiento: Preventivo, Correctivo o Predictivo.
+- Prioridad: un número entero del 1 al 5.
+- Tiempo: horas y minutos; los minutos van de 0 a 59 y el total debe ser mayor que cero.
+- Estado: Pendiente, En proceso o Finalizado.
+""")
     input("\nPresione ENTER para volver al menú...")
 
 

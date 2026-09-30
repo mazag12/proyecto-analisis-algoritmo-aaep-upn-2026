@@ -4,6 +4,14 @@ Created on Tue Sep  8 21:07:30 2026
 @author: MAZAG
 """
 import time
+from algoritmo_voraz import planificar_por_prioridad
+from busqueda_binaria import buscar_sku_ordenado
+from ordenamiento_burbuja import (
+    ordenar_equipos_por_sku,
+    ordenar_numeros,
+    ordenar_prioridad_descendente,
+    ordenar_tiempo_ascendente,
+)
 
 equipos = [
     {
@@ -38,6 +46,9 @@ equipos = [
     }
 ]
 
+# Bubble Sort deja los equipos ordenados para que búsqueda binaria sea válida.
+equipos = ordenar_equipos_por_sku(equipos)
+
 incidencias = [
     {
         "id": 1,
@@ -68,6 +79,15 @@ incidencias = [
     }
 ]
 
+for equipo_registrado in equipos:
+    tiene_incidencia_abierta = any(
+        incidencia["sku_equipo"] == equipo_registrado["sku"]
+        and incidencia["estado"] in ("Pendiente", "En proceso")
+        for incidencia in incidencias
+    )
+    if tiene_incidencia_abierta:
+        equipo_registrado["estado"] = "En mantenimiento"
+
 def buscar_equipo(sku):
 
     if not isinstance(sku, str):
@@ -75,15 +95,17 @@ def buscar_equipo(sku):
 
     sku = sku.strip().upper()
 
-    for equipo in equipos:
-
-        if equipo["sku"].upper() == sku:
-            return equipo
-
-    return None
+    # Invocación de búsqueda binaria: equipos se mantiene ordenada por SKU.
+    return buscar_sku_ordenado(equipos, sku)
 
 
 def buscar_incidencia(id_incidencia):
+
+    if (
+        not isinstance(id_incidencia, int)
+        or isinstance(id_incidencia, bool)
+    ):
+        return None
 
     for incidencia in incidencias:
 
@@ -96,6 +118,8 @@ def sku_valido(sku):
 
     if not isinstance(sku, str):
         return False
+
+    sku = sku.strip()
 
     if sku == "":
         return False
@@ -120,6 +144,8 @@ def modelo_valido(modelo):
     if not isinstance(modelo, str):
         return False
 
+    modelo = modelo.strip()
+
     if modelo == "":
         return False
 
@@ -127,21 +153,20 @@ def modelo_valido(modelo):
         return False
 
 
-    for caracter in modelo:
-
-        if not (
-            ("A" <= caracter <= "Z")
-            or ("a" <= caracter <= "z")
-            or ("0" <= caracter <= "9")
-        ):
-            return False
-
-    return True
+    return (
+        any(caracter.isalnum() for caracter in modelo)
+        and all(
+            caracter.isalnum() or caracter in " ._/-"
+            for caracter in modelo
+        )
+    )
 
 def usuario_valido(usuario):
 
     if not isinstance(usuario, str):
         return False
+
+    usuario = usuario.strip()
 
     if usuario == "":
         return False
@@ -157,25 +182,77 @@ def usuario_valido(usuario):
         return False
 
 
-    return True
+    return (
+        any(caracter.isalnum() for caracter in usuario)
+        and all(
+            caracter.isalnum() or caracter in "._@-"
+            for caracter in usuario
+        )
+    )
+
+
+def tipo_valido(tipo):
+
+    if not isinstance(tipo, str):
+        return False
+
+    tipo = tipo.strip()
+
+    return (
+        3 <= len(tipo) <= 50
+        and any(caracter.isalpha() for caracter in tipo)
+        and all(
+            caracter.isalpha() or caracter in " -'"
+            for caracter in tipo
+        )
+    )
+
+
+def marca_valida(marca):
+
+    if not isinstance(marca, str):
+        return False
+
+    marca = marca.strip()
+
+    return (
+        1 <= len(marca) <= 50
+        and any(caracter.isalnum() for caracter in marca)
+        and all(
+            caracter.isalnum() or caracter in " &.-"
+            for caracter in marca
+        )
+    )
+
+
+def equipo_valido(equipo):
+
+    if not isinstance(equipo, str):
+        return False
+
+    equipo = equipo.strip()
+
+    return (
+        3 <= len(equipo) <= 50
+        and any(caracter.isalnum() for caracter in equipo)
+        and all(
+            caracter.isalnum() or caracter in " _./-"
+            for caracter in equipo
+        )
+    )
 
 def texto_valido(valor, campo):
+    validadores = {
+        "tipo": tipo_valido,
+        "marca": marca_valida,
+        "equipo": equipo_valido,
+    }
+    validador = validadores.get(campo)
 
-    if not isinstance(valor, str):
+    if validador is None:
         return False
 
-    valor = valor.strip()
-
-    if valor == "":
-        return False
-
-    if len(valor) < 3:
-        return False
-
-    if len(valor) > 50:
-        return False
-
-    return True
+    return validador(valor)
 
 def datos_equipo_validos(
     sku,
@@ -188,11 +265,11 @@ def datos_equipo_validos(
 
     return (
         sku_valido(sku)
-        and texto_valido(tipo, "tipo")
-        and texto_valido(marca, "marca")
+        and tipo_valido(tipo)
+        and marca_valida(marca)
         and modelo_valido(modelo)
         and usuario_valido(usuario)
-        and texto_valido(equipo, "equipo")
+        and equipo_valido(equipo)
     )
 
 
@@ -205,23 +282,22 @@ def registrar_equipo(
     equipo
 ):
 
-    sku = str(sku).strip().upper()
-    tipo = str(tipo).strip()
-    marca = str(marca).strip()
-    modelo = str(modelo).strip()
-    usuario = str(usuario).strip()
-    equipo = str(equipo).strip()
-
     if not datos_equipo_validos(
         sku,
         tipo,
         marca,
         modelo,
         usuario,
-        equipo
+        equipo,
     ):
         return False
 
+    sku = sku.strip().upper()
+    tipo = tipo.strip()
+    marca = marca.strip()
+    modelo = modelo.strip()
+    usuario = usuario.strip()
+    equipo = equipo.strip()
 
     if buscar_equipo(sku) is not None:
         return False
@@ -249,6 +325,9 @@ def registrar_equipo(
 
     equipos.append(nuevo_equipo)
 
+    # Bubble Sort conserva el orden necesario para las búsquedas binarias.
+    equipos[:] = ordenar_equipos_por_sku(equipos)
+
     return nuevo_equipo
 
 
@@ -260,9 +339,15 @@ def registrar_incidencia(
     tiempo
 ):
 
+    if not isinstance(sku, str) or not isinstance(problema, str):
+        return False
+
     equipo = buscar_equipo(sku)
 
     if equipo is None:
+        return False
+
+    if equipo_tiene_incidencia_abierta(equipo["sku"]):
         return False
 
     if not problema_valido(problema):
@@ -275,13 +360,19 @@ def registrar_incidencia(
     ):
         return False
 
-    if not isinstance(prioridad, int):
+    if (
+        not isinstance(prioridad, int)
+        or isinstance(prioridad, bool)
+    ):
         return False
 
     if prioridad < 1 or prioridad > 5:
         return False
 
-    if not isinstance(tiempo, int):
+    if (
+        not isinstance(tiempo, int)
+        or isinstance(tiempo, bool)
+    ):
         return False
 
     if tiempo < 1:
@@ -298,8 +389,8 @@ def registrar_incidencia(
 
     incidencia = {
         "id": nuevo_id,
-        "sku_equipo": sku,
-        "problema": problema,
+        "sku_equipo": equipo["sku"],
+        "problema": problema.strip(),
         "tipo_mantenimiento": tipo_mantenimiento,
         "prioridad": prioridad,
         "tiempo_estimado": tiempo,
@@ -309,7 +400,7 @@ def registrar_incidencia(
     incidencias.append(incidencia)
 
 
-    equipo["estado"] = "Inoperativo"
+    equipo["estado"] = "En mantenimiento"
 
     return incidencia
 
@@ -327,13 +418,36 @@ def problema_valido(problema):
     if len(problema) > 250:
         return False
 
-    return True
+    return (
+        any(caracter.isalnum() for caracter in problema)
+        and all(caracter.isprintable() for caracter in problema)
+    )
+
+
+def equipo_tiene_incidencia_abierta(sku):
+
+    equipo = buscar_equipo(sku)
+
+    if equipo is None:
+        return False
+
+    return any(
+        incidencia["sku_equipo"] == equipo["sku"]
+        and incidencia["estado"] in ("Pendiente", "En proceso")
+        for incidencia in incidencias
+    )
 
 
 def actualizar_estado(
     id_incidencia,
     nuevo_estado
 ):
+
+    if (
+        not isinstance(id_incidencia, int)
+        or isinstance(id_incidencia, bool)
+    ):
+        return False
 
     incidencia = buscar_incidencia(
         id_incidencia
@@ -351,6 +465,14 @@ def actualizar_estado(
     if nuevo_estado not in estados_validos:
         return False
 
+    if nuevo_estado in ("Pendiente", "En proceso") and any(
+        otra["id"] != id_incidencia
+        and otra["sku_equipo"] == incidencia["sku_equipo"]
+        and otra["estado"] in ("Pendiente", "En proceso")
+        for otra in incidencias
+    ):
+        return False
+
     incidencia["estado"] = nuevo_estado
 
     equipo = buscar_equipo(
@@ -358,71 +480,24 @@ def actualizar_estado(
     )
 
     if equipo:
-
-        if nuevo_estado == "Finalizado":
-
-            equipo["estado"] = "Operativo"
-
-        elif nuevo_estado in (
-            "Pendiente",
-            "En proceso"
-        ):
-
-            equipo["estado"] = "Inoperativo"
+        # El estado del equipo refleja si su incidencia sigue abierta.
+        equipo["estado"] = (
+            "En mantenimiento"
+            if equipo_tiene_incidencia_abierta(equipo["sku"])
+            else "Operativo"
+        )
 
     return True
 
 
 def burbuja_descendente(lista):
-
-    lista = lista.copy()
-
-    n = len(lista)
-
-    for i in range(n):
-
-        for j in range(
-            0,
-            n - i - 1
-        ):
-
-            if (
-                lista[j]["prioridad"]
-                < lista[j + 1]["prioridad"]
-            ):
-
-                lista[j], lista[j + 1] = (
-                    lista[j + 1],
-                    lista[j]
-                )
-
-    return lista
+    # Invocación de Bubble Sort para priorizar la incidencia de mayor nivel.
+    return ordenar_prioridad_descendente(lista)
 
 
 def ordenar_por_tiempo(lista):
-
-    lista = lista.copy()
-
-    n = len(lista)
-
-    for i in range(n):
-
-        for j in range(
-            0,
-            n - i - 1
-        ):
-
-            if (
-                lista[j]["tiempo_estimado"]
-                > lista[j + 1]["tiempo_estimado"]
-            ):
-
-                lista[j], lista[j + 1] = (
-                    lista[j + 1],
-                    lista[j]
-                )
-
-    return lista
+    # Invocación de Bubble Sort para ordenar la duración de menor a mayor.
+    return ordenar_tiempo_ascendente(lista)
 
 
 def planificar_mantenimiento():
@@ -435,9 +510,8 @@ def planificar_mantenimiento():
 
             pendientes.append(incidencia)
 
-    return burbuja_descendente(
-        pendientes
-    )
+    # Invocación del algoritmo voraz sobre las incidencias pendientes.
+    return planificar_por_prioridad(pendientes)
 
 
 def obtener_estadisticas():
@@ -528,6 +602,7 @@ def medir_ordenamiento():
 
     inicio = time.perf_counter()
 
+    # Invocación de Bubble Sort para medir el orden por prioridad.
     resultado = burbuja_descendente(
         lista
     )
@@ -540,156 +615,77 @@ def medir_ordenamiento():
 
 
 def demostracion_algoritmos():
-
-    lista = [
-        44,
-        55,
-        12,
-        42,
-        94,
-        18,
-        6,
-        67
-    ]
-
-    original = lista.copy()
-
-
-    ascendente = lista.copy()
+    numeros = [44, 55, 12, 42, 94, 18, 6, 67]
 
     inicio = time.perf_counter()
-
-    n = len(ascendente)
-
-    for i in range(n):
-
-        for j in range(
-            0,
-            n - i - 1
-        ):
-
-            if (
-                ascendente[j]
-                > ascendente[j + 1]
-            ):
-
-                ascendente[j], ascendente[j + 1] = (
-                    ascendente[j + 1],
-                    ascendente[j]
-                )
-
-    fin = time.perf_counter()
-
-    tiempo_ascendente = (
-        fin - inicio
-    )
-
-
-    descendente = lista.copy()
+    # Bubble Sort se invoca para mostrar el orden ascendente de números.
+    ascendente = ordenar_numeros(numeros, ascendente=True)
+    tiempo_ascendente = time.perf_counter() - inicio
 
     inicio = time.perf_counter()
+    # Bubble Sort se invoca para mostrar el orden descendente de números.
+    descendente = ordenar_numeros(numeros, ascendente=False)
+    tiempo_descendente = time.perf_counter() - inicio
 
-    descendente = (
-        burbuja_descendente_simple(
-            descendente
+    recorrido_busqueda = []
+    sku_demo = equipos[-1]["sku"] if equipos else ""
+
+    if equipos:
+        # Búsqueda binaria registra los SKU centrales revisados en la demo.
+        encontrado = buscar_sku_ordenado(
+            equipos,
+            sku_demo,
+            recorrido_busqueda,
         )
-    )
+    else:
+        encontrado = None
 
-    fin = time.perf_counter()
+    # El algoritmo voraz arma un plan real con las incidencias pendientes.
+    plan_voraz = planificar_mantenimiento()
 
-    tiempo_descendente = (
-        fin - inicio
-    )
-
-    return (
-        original,
-        ascendente,
-        tiempo_ascendente,
-        descendente,
-        tiempo_descendente
-    )
+    return {
+        "numeros_originales": numeros,
+        "numeros_ascendentes": ascendente,
+        "tiempo_ascendente": tiempo_ascendente,
+        "numeros_descendentes": descendente,
+        "tiempo_descendente": tiempo_descendente,
+        "sku_demo": sku_demo,
+        "recorrido_busqueda": recorrido_busqueda,
+        "equipo_encontrado": encontrado,
+        "plan_voraz": plan_voraz,
+    }
 
 
 def burbuja_descendente_simple(lista):
-
-    n = len(lista)
-
-    for i in range(n):
-
-        for j in range(
-            0,
-            n - i - 1
-        ):
-
-            if (
-                lista[j]
-                < lista[j + 1]
-            ):
-
-                lista[j], lista[j + 1] = (
-                    lista[j + 1],
-                    lista[j]
-                )
-
-    return lista
-
+    # Bubble Sort conserva esta función pública de compatibilidad.
+    return ordenar_numeros(lista, ascendente=False)
 
 def validar_texto_equipo(
     mensaje,
     campo
 ):
 
+    instrucciones = {
+        "tipo": (
+            "Use 3-50 letras; se permiten espacios, guion y apóstrofo."
+        ),
+        "marca": (
+            "Use hasta 50 letras o números; se permiten espacios, &, punto y guion."
+        ),
+        "equipo": (
+            "Use 3-50 letras o números; se permiten espacios, _, punto, / y guion."
+        ),
+    }
+
     while True:
 
         print()
-        print(
-            f"¿Qué debe ingresar en {campo}?"
-        )
-
-        print(
-            "- No puede estar vacío."
-        )
-
-        print(
-            "- Mínimo: 3 caracteres."
-        )
-
-        print(
-            "- Máximo: 50 caracteres."
-        )
+        print(f"Reglas para {campo}:")
+        print(f"- {instrucciones.get(campo, 'Ingrese un valor válido.')}")
 
         valor = input(
             f"Ingrese {campo}: "
         ).strip()
-
-        if valor == "":
-
-            print(
-                f"\n ALERTA: El campo "
-                f"'{campo}' no puede estar vacío."
-            )
-
-            continue
-
-        if len(valor) < 3:
-
-            print(
-                f"\n ALERTA: El campo "
-                f"'{campo}' debe tener mínimo "
-                f"3 caracteres."
-            )
-
-            continue
-
-        if len(valor) > 50:
-
-            print(
-                f"\n ALERTA: El campo "
-                f"'{campo}' no puede superar "
-                f"los 50 caracteres."
-            )
-
-            continue
 
         if not texto_valido(
             valor,
@@ -697,8 +693,8 @@ def validar_texto_equipo(
         ):
 
             print(
-                f"\n ALERTA: El valor ingresado "
-                f"para '{campo}' no es válido."
+                f"\n ALERTA: '{campo}' no cumple "
+                "el formato indicado. Intente nuevamente."
             )
 
             continue
@@ -777,13 +773,12 @@ def validar_modelo():
 
         print()
         print("¿Qué debe ingresar en Modelo?")
-        print("- Letras y números.")
-        print("- Sin espacios.")
-        print("- Sin caracteres especiales.")
+        print("- De 1 a 50 caracteres.")
+        print("- Letras, números, espacios y . _ / -")
 
         print()
         print("Ejemplo:")
-        print("ThinkCentreM720")
+        print("ThinkCentre M720")
 
         modelo = input(
             "\nIngrese Modelo: "
@@ -805,8 +800,8 @@ def validar_modelo():
             )
 
             print(
-                "El modelo solo debe contener "
-                "letras y números."
+                "Use letras o números y, si hace falta, "
+                "espacios o los signos . _ / - ."
             )
 
             continue
@@ -820,10 +815,8 @@ def validar_usuario():
 
         print()
         print("¿Qué debe ingresar en Usuario?")
-        print("- Letras.")
-        print("- Números.")
-        print("- Caracteres especiales.")
-        print("- NO se permiten espacios.")
+        print("- De 3 a 50 caracteres, sin espacios.")
+        print("- Letras, números y los signos . _ @ -")
 
         print()
         print("Ejemplos:")
@@ -874,10 +867,19 @@ def validar_usuario():
 
             continue
 
+        if not usuario_valido(usuario):
+
+            print(
+                "\n ALERTA: Use solo letras, números y "
+                "los signos . _ @ - ."
+            )
+
+            continue
+
         return usuario
 
 
-def validar_sku_equipo():
+def validar_sku_equipo(solo_sin_incidencia_abierta=False):
 
     while True:
 
@@ -927,7 +929,32 @@ def validar_sku_equipo():
 
             continue
 
+        if (
+            solo_sin_incidencia_abierta
+            and equipo_tiene_incidencia_abierta(sku)
+        ):
+            print(
+                f"\n ALERTA: El equipo '{sku}' ya tiene "
+                "una incidencia pendiente o en proceso."
+            )
+            print("Finalícela antes de registrar otra.")
+            continue
+
         return sku
+
+
+def validar_sku_busqueda():
+
+    while True:
+        sku = input("Ingrese SKU para buscar (ejemplo PC1001): ").strip().upper()
+
+        if sku_valido(sku):
+            return sku
+
+        print(
+            "\n ALERTA: El SKU debe tener entre 1 y 20 caracteres "
+            "y usar solo letras y números."
+        )
 
 
 def validar_problema():

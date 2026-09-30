@@ -35,6 +35,76 @@ equipos = [
         "usuario": "JuanTorres",
         "equipo": "EquipoContabilidad01",
         "estado": "Operativo"
+    },
+    {
+        "id": 4,
+        "sku": "LAP1004",
+        "tipo": "Laptop",
+        "marca": "Lenovo",
+        "modelo": "ThinkPad",
+        "usuario": "AnaGarcia",
+        "equipo": "LaptopRecursosHumanos01",
+        "estado": "Operativo"
+    },
+    {
+        "id": 5,
+        "sku": "PC1005",
+        "tipo": "Computadora",
+        "marca": "HP",
+        "modelo": "EliteDesk",
+        "usuario": "PedroRamirez",
+        "equipo": "EquipoVentas01",
+        "estado": "Inoperativo"
+    },
+    {
+        "id": 6,
+        "sku": "LAP1006",
+        "tipo": "Laptop",
+        "marca": "Dell",
+        "modelo": "Latitude",
+        "usuario": "LuciaMendoza",
+        "equipo": "LaptopGerencia01",
+        "estado": "Operativo"
+    },
+    {
+        "id": 7,
+        "sku": "PC1007",
+        "tipo": "Computadora",
+        "marca": "Acer",
+        "modelo": "Veriton",
+        "usuario": "DiegoFlores",
+        "equipo": "EquipoSoporte01",
+        "estado": "Operativo"
+    },
+    {
+        "id": 8,
+        "sku": "LAP1008",
+        "tipo": "Laptop",
+        "marca": "ASUS",
+        "modelo": "VivoBook",
+        "usuario": "SofiaCastro",
+        "equipo": "LaptopMarketing01",
+        "estado": "Operativo"
+    },
+    {
+        "id": 9,
+        "sku": "PC1009",
+        "tipo": "Computadora",
+        "marca": "Dell",
+        "modelo": "Vostro",
+        "usuario": "LuisQuispe",
+        "equipo": "EquipoLogistica01",
+        "estado": "Inoperativo"
+    },
+    {
+        "id": 10,
+        "sku": "LAP1010",
+        "tipo": "Laptop",
+        "marca": "HP",
+        "modelo": "EliteBook",
+        "usuario": "ElenaRojas",
+        "equipo": "LaptopDireccion01",
+        "estado": "Operativo"
     }
 ]
 
@@ -65,6 +135,114 @@ incidencias = [
         "prioridad": 2,
         "tiempo_estimado": 30,
         "estado": "Pendiente"
+    },
+    {
+        "id": 4,
+        "sku_equipo": "LAP1004",
+        "problema": "Bateria con bajo rendimiento",
+        "tipo_mantenimiento": "Correctivo",
+        "prioridad": 3,
+        "tiempo_estimado": 90,
+        "estado": "En proceso"
+    },
+    {
+        "id": 5,
+        "sku_equipo": "PC1005",
+        "problema": "El equipo no inicia el sistema operativo",
+        "tipo_mantenimiento": "Correctivo",
+        "prioridad": 5,
+        "tiempo_estimado": 120,
+        "estado": "Pendiente"
+    },
+    {
+        "id": 6,
+        "sku_equipo": "LAP1006",
+        "problema": "Lentitud general durante la ejecucion de programas",
+        "tipo_mantenimiento": "Preventivo",
+        "prioridad": 3,
+        "tiempo_estimado": 40,
+        "estado": "Pendiente"
+    },
+    {
+        "id": 7,
+        "sku_equipo": "PC1007",
+        "problema": "Fallas intermitentes en el sistema",
+        "tipo_mantenimiento": "Predictivo",
+        "prioridad": 4,
+        "tiempo_estimado": 75,
+        "estado": "Finalizado"
+    },
+    {
+        "id": 8,
+        "sku_equipo": "LAP1008",
+        "problema": "Problemas de conexion a la red corporativa",
+        "tipo_mantenimiento": "Correctivo",
+        "prioridad": 4,
+        "tiempo_estimado": 50,
+        "estado": "Pendiente"
+    },
+    {
+        "id": 9,
+        "sku_equipo": "PC1009",
+        "problema": "Pantalla presenta errores durante el uso",
+        "tipo_mantenimiento": "Correctivo",
+        "prioridad": 5,
+        "tiempo_estimado": 80,
+        "estado": "Pendiente"
+    },
+    {
+        "id": 10,
+        "sku_equipo": "LAP1010",
+        "problema": "Actualizacion de controladores requerida",
+        "tipo_mantenimiento": "Preventivo",
+        "prioridad": 2,
+        "tiempo_estimado": 25,
+        "estado": "Finalizado"
+    },
+    {
+        "id": 11,
+        "sku_equipo": "PC1001",
+        "problema": "Espacio insuficiente en la unidad de almacenamiento",
+        "tipo_mantenimiento": "Preventivo",
+        "prioridad": 2,
+        "tiempo_estimado": 35,
+        "estado": "Pendiente"
+    },
+    {
+        "id": 12,
+        "sku_equipo": "LAP1002",
+        "problema": "Teclado presenta algunas teclas sin respuesta",
+        "tipo_mantenimiento": "Correctivo",
+        "prioridad": 4,
+        "tiempo_estimado": 55,
+        "estado": "Pendiente"
+    },
+    {
+        "id": 13,
+        "sku_equipo": "PC1003",
+        "problema": "Se detectaron errores en el disco de almacenamiento",
+        "tipo_mantenimiento": "Predictivo",
+        "prioridad": 5,
+        "tiempo_estimado": 100,
+        "estado": "Pendiente"
+    },
+    {
+        "id": 14,
+        "sku_equipo": "PC1007",
+        "problema": "Limpieza interna y mantenimiento preventivo",
+        "tipo_mantenimiento": "Preventivo",
+        "prioridad": 1,
+        "tiempo_estimado": 45,
+        "estado": "Pendiente"
+    },
+    {
+        "id": 15,
+        "sku_equipo": "LAP1010",
+        "problema": "Ventilador genera ruido durante el funcionamiento",
+        "tipo_mantenimiento": "Predictivo",
+        "prioridad": 3,
+        "tiempo_estimado": 65,
+        "estado": "En proceso"
     }
 ]
 
@@ -651,7 +829,7 @@ def validar_texto_equipo(
         )
 
         print(
-            "- Mínimo: 3 caracteres."
+            "- Mínimo: 2 caracteres."
         )
 
         print(
@@ -671,7 +849,7 @@ def validar_texto_equipo(
 
             continue
 
-        if len(valor) < 3:
+        if len(valor) < 2:
 
             print(
                 f"\n ALERTA: El campo "
@@ -1174,3 +1352,172 @@ def validar_estado():
             "\n ALERTA: Seleccione "
             "una opción entre 1 y 3."
         )
+        
+        
+def contar_pendientes_recursivo(lista, indice=0):
+
+    if indice >= len(lista):
+        return 0
+
+    if lista[indice]["estado"] == "Pendiente":
+        return 1 + contar_pendientes_recursivo(
+            lista,
+            indice + 1
+        )
+
+    return contar_pendientes_recursivo(
+        lista,
+        indice + 1
+    )
+
+
+def planificar_voraz(tiempo_disponible):
+
+    pendientes = []
+
+    for incidencia in incidencias:
+
+        if incidencia["estado"] == "Pendiente":
+            pendientes.append(incidencia.copy())
+
+    # Ordenar por prioridad descendente
+    # y, en caso de empate, por menor tiempo
+    n = len(pendientes)
+
+    for i in range(n):
+
+        for j in range(0, n - i - 1):
+
+            prioridad_actual = pendientes[j]["prioridad"]
+            prioridad_siguiente = pendientes[j + 1]["prioridad"]
+
+            tiempo_actual = pendientes[j]["tiempo_estimado"]
+            tiempo_siguiente = pendientes[j + 1]["tiempo_estimado"]
+
+            if (
+                prioridad_actual < prioridad_siguiente
+                or (
+                    prioridad_actual == prioridad_siguiente
+                    and tiempo_actual > tiempo_siguiente
+                )
+            ):
+
+                pendientes[j], pendientes[j + 1] = (
+                    pendientes[j + 1],
+                    pendientes[j]
+                )
+
+    seleccionadas = []
+    tiempo_usado = 0
+
+    for incidencia in pendientes:
+
+        tiempo = incidencia["tiempo_estimado"]
+
+        if tiempo_usado + tiempo <= tiempo_disponible:
+
+            seleccionadas.append(incidencia)
+
+            tiempo_usado += tiempo
+
+    return seleccionadas, tiempo_usado
+
+
+def backtracking_mantenimiento(
+    pendientes,
+    tiempo_disponible,
+    indice=0,
+    seleccion_actual=None,
+    tiempo_actual=0,
+    prioridad_actual=0
+):
+
+    if seleccion_actual is None:
+        seleccion_actual = []
+
+    # Caso base
+    if indice >= len(pendientes):
+
+        return (
+            seleccion_actual.copy(),
+            tiempo_actual,
+            prioridad_actual
+        )
+
+    # Mejor solución encontrada hasta el momento
+    mejor_lista = seleccion_actual.copy()
+    mejor_tiempo = tiempo_actual
+    mejor_prioridad = prioridad_actual
+
+    incidencia = pendientes[indice]
+
+    tiempo = incidencia["tiempo_estimado"]
+    prioridad = incidencia["prioridad"]
+
+    # RAMA 1: INCLUIR LA INCIDENCIA
+
+    if tiempo_actual + tiempo <= tiempo_disponible:
+
+        seleccion_actual.append(incidencia)
+
+        lista_incluida, tiempo_incluido, prioridad_incluida = (
+            backtracking_mantenimiento(
+                pendientes,
+                tiempo_disponible,
+                indice + 1,
+                seleccion_actual,
+                tiempo_actual + tiempo,
+                prioridad_actual + prioridad
+            )
+        )
+
+        seleccion_actual.pop()
+
+        if prioridad_incluida > mejor_prioridad:
+
+            mejor_lista = lista_incluida
+            mejor_tiempo = tiempo_incluido
+            mejor_prioridad = prioridad_incluida
+
+
+    #RAMA 2: NO INCLUIR LA INCIDENCIA
+
+
+    lista_sin, tiempo_sin, prioridad_sin = (
+        backtracking_mantenimiento(
+            pendientes,
+            tiempo_disponible,
+            indice + 1,
+            seleccion_actual,
+            tiempo_actual,
+            prioridad_actual
+        )
+    )
+
+    if prioridad_sin > mejor_prioridad:
+
+        mejor_lista = lista_sin
+        mejor_tiempo = tiempo_sin
+        mejor_prioridad = prioridad_sin
+
+    return (
+        mejor_lista,
+        mejor_tiempo,
+        mejor_prioridad
+    )
+
+
+def planificar_backtracking(tiempo_disponible):
+
+    pendientes = []
+
+    for incidencia in incidencias:
+
+        if incidencia["estado"] == "Pendiente":
+            pendientes.append(incidencia.copy())
+
+    return backtracking_mantenimiento(
+        pendientes,
+        tiempo_disponible
+    )
+

@@ -42,13 +42,14 @@ Permite registrar un nuevo equipo informático solicitando:
 * Marca
 * Modelo
 * Usuario
+* Identificación del equipo
 
 El sistema asigna automáticamente:
 
 * ID del equipo.
 * Estado inicial: `Operativo`.
 
-También se verifica que el código no esté registrado previamente.
+También se verifica que el SKU no esté registrado previamente, sin distinguir mayúsculas y minúsculas.
 
 ### 2. Registrar incidencia
 
@@ -86,6 +87,8 @@ Además, el estado del equipo pasa a:
 
 `En mantenimiento`
 
+Un equipo solo puede tener una incidencia pendiente o en proceso a la vez.
+
 ---
 
 ### 3. Mostrar equipos
@@ -98,6 +101,7 @@ Muestra todos los equipos registrados junto con su información:
 * Marca
 * Modelo
 * Usuario
+* Identificación del equipo
 * Estado
 
 ---
@@ -118,7 +122,7 @@ Muestra todas las incidencias registradas indicando:
 
 ### 5. Buscar equipo
 
-Permite buscar un equipo mediante su código.
+Permite buscar un equipo mediante su SKU.
 
 Si el equipo existe, se muestra toda su información.
 
@@ -170,9 +174,9 @@ Genera un orden recomendado para atender las incidencias que se encuentran en es
 
 `Pendiente`
 
-La planificación utiliza la prioridad como criterio principal mediante el algoritmo de ordenamiento burbuja.
+La planificación utiliza un **algoritmo voraz**. En cada paso elige la incidencia pendiente con mayor prioridad; si hay empate, prefiere la de menor duración y luego el menor ID.
 
-Esto permite determinar qué incidencias deberían atenderse primero.
+Es una regla práctica para decidir qué atender primero, no una promesa de que el resultado sea el mejor posible para cualquier escenario.
 
 ---
 
@@ -238,15 +242,17 @@ Tiempo promedio        : 45.00 minutos
 
 ### 11. Demostración de algoritmos
 
-Incluye una demostración del algoritmo **Bubble Sort** utilizando una lista de números.
+Incluye demostraciones sencillas de **Bubble Sort**, **búsqueda binaria** y el **algoritmo voraz**.
 
 Se muestran:
 
-* Lista original.
-* Ordenamiento ascendente.
-* Tiempo de ejecución ascendente.
-* Ordenamiento descendente.
-* Tiempo de ejecución descendente.
+* Lista original y sus versiones ordenadas con Bubble Sort.
+* SKU centrales revisados por la búsqueda binaria.
+* Orden de atención generado por el algoritmo voraz.
+* Explicación numerada de cada algoritmo en lenguaje sencillo.
+* Promedio de ejecución de cada algoritmo, medido con ocho elementos y 1.000 repeticiones.
+
+Los tiempos se muestran como referencia. Como cada algoritmo resuelve una tarea distinta, no deben interpretarse como una comparación definitiva de cuál es mejor.
 
 Ejemplo:
 
@@ -272,58 +278,51 @@ El sistema incorpora validaciones para evitar el ingreso de datos incorrectos.
 El SKU del equipo:
 
 * Debe contener letras y números.
-* Debe tener entre 1 y 5 caracteres.
+* Debe tener entre 1 y 20 caracteres.
+* Solo admite letras ASCII (sin tildes) y números.
 * No puede repetirse.
 * No puede estar vacío.
-* No puede contener espacios vacíos.
+* No puede contener espacios, guiones ni otros símbolos.
 
 Ejemplo válido:
 
 ```text
-1001
-25
-12345
+PC1001
+LAP2026
+EQABC01
 ```
 
 Ejemplos inválidos:
 
 ```text
-PC01
-100001
-10A2
+PC-01
+LAP 2026
+PCÁ100
 ```
 
 ---
 
-### Tipo, marca y usuario
+### Tipo
 
-Estos campos:
+* De 3 a 50 letras; permite espacios, guion y apóstrofo.
+* Ejemplos: `Computadora`, `Todo-en-uno`.
 
-* Aceptan letras.
-* Permiten espacios.
-* Permiten caracteres con tildes.
-* Tienen un máximo de 50 caracteres.
-* No permiten números ni caracteres especiales.
+### Marca
 
-Ejemplos válidos:
+* De 1 a 50 letras o números; permite espacios y los signos `&`, `.` y `-`.
+* Ejemplos: `HP`, `Lenovo`, `Hewlett-Packard`.
 
-```text
-Computadora
-Laptop
-Lenovo
-Carlos Perez
-María López
-```
+### Usuario
+
+* De 3 a 50 caracteres, sin espacios.
+* Permite letras, números y los signos `.`, `_`, `@` y `-`.
+* Ejemplos: `CarlosPerez`, `usuario01`, `user@empresa`.
 
 ---
 
 ### Modelo
 
-El modelo puede contener:
-
-* Letras.
-* Números.
-* Espacios.
+De 1 a 50 caracteres. Permite letras, números, espacios y los signos `.`, `_`, `/` y `-`. Debe incluir al menos una letra o número.
 
 Ejemplos:
 
@@ -333,6 +332,10 @@ ProBook
 OptiPlex 7090
 EliteBook 840
 ```
+
+### Identificación del equipo
+
+De 3 a 50 letras o números; permite espacios y los signos `_`, `.`, `/` y `-`. Debe incluir al menos una letra o número.
 
 ---
 
@@ -345,7 +348,7 @@ La descripción de una incidencia debe:
 * Permitir letras.
 * Permitir números.
 * Permitir espacios.
-* Permitir signos de puntuación comunes.
+* Permitir texto imprimible y puntuación; debe incluir letras o números.
 
 Ejemplo:
 
@@ -381,7 +384,7 @@ No se permite registrar un tiempo igual a cero.
 
 ## 🧠 Algoritmos utilizados
 
-Uno de los objetivos del proyecto es aplicar algoritmos de ordenamiento sobre los datos del sistema.
+El sistema integra tres tipos de algoritmos: ordenamiento, búsqueda y planificación.
 
 ### Bubble Sort
 
@@ -393,7 +396,7 @@ El proyecto utiliza Bubble Sort para:
 
 * Ordenar incidencias por prioridad.
 * Ordenar incidencias por tiempo.
-* Generar la planificación de mantenimiento.
+* Mantener los equipos ordenados por SKU para la búsqueda binaria.
 * Realizar demostraciones de ordenamiento ascendente y descendente.
 
 ### Complejidad
@@ -406,24 +409,36 @@ O(n²)
 
 donde `n` representa la cantidad de elementos que se deben ordenar.
 
+En cada pasada se revisan elementos vecinos. Si están en el orden equivocado, se cambian de lugar. El proceso termina cuando una pasada completa no necesita intercambios.
+
+### Algoritmo voraz para planificar
+
+El planificador considera solo las incidencias pendientes y elige una por una usando esta regla:
+
+1. Elegir la prioridad más alta.
+2. Si hay empate, elegir el menor tiempo estimado.
+3. Si todavía hay empate, elegir el ID menor.
+4. Repetir con las incidencias restantes.
+
+Este método toma la mejor decisión disponible en cada paso; es una regla práctica, no una garantía de que el plan sea el mejor en todos los escenarios. Como vuelve a revisar las candidatas en cada elección, su tiempo crece aproximadamente como `O(n²)`.
+
 ---
 
 ## 🔎 Búsqueda
 
-El sistema utiliza búsqueda secuencial para localizar:
+### Búsqueda binaria de equipos
 
-* Equipos por código.
-* Incidencias por ID.
+Los equipos se mantienen ordenados por SKU. El algoritmo revisa el elemento central y conserva solo la mitad donde podría estar el SKU buscado. Repite hasta encontrarlo o agotar los candidatos.
 
-Por ejemplo:
+1. Revisar el SKU del centro.
+2. Descartar la mitad que no puede contener el SKU.
+3. Repetir con la mitad restante.
 
-```python
-for equipo in equipos:
-    if equipo["codigo"] == codigo:
-        return equipo
-```
+Su tiempo de búsqueda crece aproximadamente como `O(log n)` para una lista ordenada.
 
-Este enfoque permite recorrer los elementos hasta encontrar el registro solicitado.
+### Búsqueda secuencial de incidencias
+
+Las incidencias se localizan por ID recorriendo la lista hasta encontrar una coincidencia. Su tiempo crece aproximadamente como `O(n)`.
 
 ---
 
@@ -449,11 +464,12 @@ Ejemplo:
 ```python
 {
     "id": 1,
-    "codigo": "1001",
+    "sku": "PC1001",
     "tipo": "Computadora",
     "marca": "Lenovo",
     "modelo": "ThinkCentre",
-    "usuario": "Carlos Perez",
+    "usuario": "CarlosPerez",
+    "equipo": "EquipoAdministrativo01",
     "estado": "Operativo"
 }
 ```
@@ -468,38 +484,15 @@ clave → valor
 
 ## 🏗️ Estructura del proyecto
 
-El proyecto está organizado principalmente en dos módulos:
-
 ```text
-📁 proyecto/
-│
-├── 📄 metodos.py
-│   ├── Datos iniciales
-│   ├── Búsqueda de equipos
-│   ├── Búsqueda de incidencias
-│   ├── Registro de equipos
-│   ├── Registro de incidencias
-│   ├── Actualización de estados
-│   ├── Ordenamiento
-│   ├── Planificación
-│   ├── Estadísticas
-│   ├── Validaciones
-│   └── Demostración de algoritmos
-│
-├── 📄 menu.py
-│   ├── Menú principal
-│   ├── Registro de equipos
-│   ├── Registro de incidencias
-│   ├── Consultas
-│   ├── Ordenamientos
-│   ├── Planificación
-│   ├── Estadísticas
-│   └── Demostración
-│
-└── 📄 README.md
+proyecto/
+├── main.py                  # Menús y comunicación por consola
+├── metodos.py               # Datos, validaciones y reglas de negocio
+├── algoritmo_voraz.py       # Planificación de incidencias
+├── busqueda_binaria.py      # Búsqueda de equipos por SKU
+├── ordenamiento_burbuja.py  # Ordenamiento de equipos, incidencias y números
+└── README.md
 ```
-
-> Los nombres de los archivos pueden variar según la organización final del proyecto.
 
 ---
 
@@ -513,8 +506,9 @@ El proyecto está organizado principalmente en dos módulos:
 * Estructuras condicionales
 * Bucles
 * Validación de datos
-* Algoritmos de ordenamiento
-* Búsqueda secuencial
+* Algoritmo voraz
+* Búsqueda binaria y búsqueda secuencial
+* Ordenamiento burbuja
 * Medición de tiempo de ejecución
 
 Biblioteca utilizada:
@@ -565,16 +559,16 @@ cd proyecto-analisis-algoritmo-aaep-upn-2026
 
 ### 3. Ejecutar el sistema
 
-Si el archivo principal es `menu.py`:
+El archivo principal es `main.py`:
 
 ```bash
-python menu.py
+python main.py
 ```
 
 En algunos sistemas puede ser necesario utilizar:
 
 ```bash
-python3 menu.py
+python3 main.py
 ```
 
 ---
@@ -691,8 +685,7 @@ El sistema busca mantener la consistencia de la información mediante validacion
 
 Por ejemplo:
 
-* No se pueden registrar códigos duplicados.
-* No se pueden registrar equipos sin código.
+* No se pueden registrar SKU duplicados ni vacíos.
 * Una incidencia debe estar asociada a un equipo existente.
 * La prioridad debe estar entre 1 y 5.
 * El tiempo estimado debe ser mayor que cero.
@@ -757,6 +750,6 @@ Si se requiere una licencia específica para distribución o uso comercial, se r
 
 El **Sistema de Mantenimiento de Equipos Informáticos** permite gestionar de manera sencilla equipos e incidencias de mantenimiento, proporcionando funcionalidades de registro, consulta, búsqueda, actualización, planificación y estadísticas.
 
-Además de resolver una necesidad básica de gestión, el proyecto permite demostrar la aplicación práctica de **estructuras de datos y algoritmos**, especialmente el ordenamiento burbuja y la búsqueda secuencial, junto con técnicas de validación y organización modular del código.
+Además de resolver una necesidad básica de gestión, el proyecto permite demostrar la aplicación práctica de **Bubble Sort**, búsqueda binaria, búsqueda secuencial y un algoritmo voraz, junto con técnicas de validación y organización modular del código.
 
 El proyecto constituye una base que puede evolucionar posteriormente hacia una solución con persistencia de datos, interfaz gráfica o aplicación web.

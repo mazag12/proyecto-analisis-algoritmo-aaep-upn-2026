@@ -37,7 +37,7 @@ El sistema dispone de un menú principal con las siguientes opciones:
 
 Permite registrar un nuevo equipo informático solicitando:
 
-* Código
+* SKU
 * Tipo
 * Marca
 * Modelo
@@ -56,7 +56,7 @@ Permite registrar una incidencia asociada a un equipo existente.
 
 Para cada incidencia se registra:
 
-* Código del equipo.
+* SKU del equipo.
 * Problema detectado.
 * Tipo de mantenimiento.
 * Prioridad.
@@ -93,7 +93,7 @@ Además, el estado del equipo pasa a:
 Muestra todos los equipos registrados junto con su información:
 
 * ID
-* Código
+* SKU
 * Tipo
 * Marca
 * Modelo
@@ -267,14 +267,15 @@ Ordenamiento descendente:
 
 El sistema incorpora validaciones para evitar el ingreso de datos incorrectos.
 
-### Código
+### SKU
 
-El código del equipo:
+El SKU del equipo:
 
-* Debe contener únicamente números.
+* Debe contener letras y números.
 * Debe tener entre 1 y 5 caracteres.
 * No puede repetirse.
 * No puede estar vacío.
+* No puede contener espacios vacíos.
 
 Ejemplo válido:
 

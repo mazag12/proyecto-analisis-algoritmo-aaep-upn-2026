@@ -13,6 +13,24 @@ from ordenamiento_burbuja import (
     ordenar_tiempo_ascendente,
 )
 
+
+class CancelarFlujo(Exception):
+    """Indica que el usuario desea abandonar la operación actual."""
+
+
+def leer_input(mensaje=""):
+    etiqueta = mensaje.rstrip()
+    if etiqueta.endswith(":"):
+        etiqueta = etiqueta[:-1]
+    prompt = f"{etiqueta} [C=cancelar]: " if etiqueta else "[C=cancelar]: "
+    respuesta = input(prompt)
+
+    if respuesta.strip().upper() in ("C", "CANCELAR", "VOLVER"):
+        raise CancelarFlujo
+
+    return respuesta
+
+
 equipos = [
     {
         "id": 1,
@@ -614,6 +632,16 @@ def medir_ordenamiento():
     return resultado, tiempo
 
 
+def _medir_promedio_microsegundos(funcion, repeticiones):
+    inicio = time.perf_counter()
+
+    for _ in range(repeticiones):
+        funcion()
+
+    duracion_total = time.perf_counter() - inicio
+    return duracion_total * 1_000_000 / repeticiones
+
+
 def demostracion_algoritmos():
     numeros = [44, 55, 12, 42, 94, 18, 6, 67]
 
@@ -643,6 +671,37 @@ def demostracion_algoritmos():
     # El algoritmo voraz arma un plan real con las incidencias pendientes.
     plan_voraz = planificar_mantenimiento()
 
+    elementos_comparacion = 8
+    repeticiones_comparacion = 1000
+    equipos_comparacion = [
+        {"sku": f"EQ{indice:04d}"}
+        for indice in range(1, elementos_comparacion + 1)
+    ]
+    incidencias_comparacion = [
+        {
+            "id": indice,
+            "prioridad": indice % 5 + 1,
+            "tiempo_estimado": indice * 7 + 10,
+        }
+        for indice in range(1, elementos_comparacion + 1)
+    ]
+
+    # Se mide Bubble Sort con una lista de ocho números.
+    tiempo_comparacion_burbuja = _medir_promedio_microsegundos(
+        lambda: ordenar_numeros(numeros),
+        repeticiones_comparacion,
+    )
+    # Se mide búsqueda binaria con ocho SKU ordenados.
+    tiempo_comparacion_binaria = _medir_promedio_microsegundos(
+        lambda: buscar_sku_ordenado(equipos_comparacion, "EQ0008"),
+        repeticiones_comparacion,
+    )
+    # Se mide el plan voraz con ocho incidencias.
+    tiempo_comparacion_voraz = _medir_promedio_microsegundos(
+        lambda: planificar_por_prioridad(incidencias_comparacion),
+        repeticiones_comparacion,
+    )
+
     return {
         "numeros_originales": numeros,
         "numeros_ascendentes": ascendente,
@@ -653,6 +712,13 @@ def demostracion_algoritmos():
         "recorrido_busqueda": recorrido_busqueda,
         "equipo_encontrado": encontrado,
         "plan_voraz": plan_voraz,
+        "tiempos_comparacion": {
+            "Bubble Sort": tiempo_comparacion_burbuja,
+            "Búsqueda binaria": tiempo_comparacion_binaria,
+            "Algoritmo voraz": tiempo_comparacion_voraz,
+        },
+        "elementos_comparacion": elementos_comparacion,
+        "repeticiones_comparacion": repeticiones_comparacion,
     }
 
 
@@ -683,7 +749,7 @@ def validar_texto_equipo(
         print(f"Reglas para {campo}:")
         print(f"- {instrucciones.get(campo, 'Ingrese un valor válido.')}")
 
-        valor = input(
+        valor = leer_input(
             f"Ingrese {campo}: "
         ).strip()
 
@@ -721,7 +787,7 @@ def validar_sku_nuevo():
         print("LAP2026")
         print("EQABC01")
 
-        sku = input(
+        sku = leer_input(
             "\nIngrese SKU: "
         ).strip().upper()
 
@@ -780,7 +846,7 @@ def validar_modelo():
         print("Ejemplo:")
         print("ThinkCentre M720")
 
-        modelo = input(
+        modelo = leer_input(
             "\nIngrese Modelo: "
         ).strip()
 
@@ -824,7 +890,7 @@ def validar_usuario():
         print("usuario01")
         print("user@empresa")
 
-        usuario = input(
+        usuario = leer_input(
             "\nIngrese Usuario: "
         ).strip()
 
@@ -896,7 +962,7 @@ def validar_sku_equipo(solo_sin_incidencia_abierta=False):
             "- Ejemplo: PC1001"
         )
 
-        sku = input(
+        sku = leer_input(
             "\nIngrese SKU del equipo: "
         ).strip().upper()
 
@@ -946,7 +1012,7 @@ def validar_sku_equipo(solo_sin_incidencia_abierta=False):
 def validar_sku_busqueda():
 
     while True:
-        sku = input("Ingrese SKU para buscar (ejemplo PC1001): ").strip().upper()
+        sku = leer_input("Ingrese SKU para buscar (ejemplo PC1001): ").strip().upper()
 
         if sku_valido(sku):
             return sku
@@ -968,7 +1034,7 @@ def validar_problema():
         print("- Máximo: 250 caracteres.")
         print("- Puede utilizar letras, números, espacios y puntuación.")
 
-        problema = input(
+        problema = leer_input(
             "\nIngrese Problema: "
         ).strip()
 
@@ -1058,7 +1124,7 @@ def validar_entero(
 
     while True:
 
-        valor = input(mensaje).strip()
+        valor = leer_input(mensaje).strip()
 
         if valor == "":
 
@@ -1111,7 +1177,7 @@ def confirmar_accion(mensaje):
 
     while True:
 
-        respuesta = input(
+        respuesta = leer_input(
             f"{mensaje} (S/N): "
         ).strip().upper()
 
@@ -1150,7 +1216,7 @@ def validar_tipo_mantenimiento():
         print("2. Correctivo")
         print("3. Predictivo")
 
-        opcion = input(
+        opcion = leer_input(
             "\nSeleccione una opción: "
         ).strip()
 
@@ -1183,7 +1249,7 @@ def validar_estado():
         print("2. En proceso")
         print("3. Finalizado")
 
-        opcion = input(
+        opcion = leer_input(
             "\nSeleccione una opción: "
         ).strip()
 

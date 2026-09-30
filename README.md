@@ -250,6 +250,9 @@ Se muestran:
 * SKU centrales revisados por la búsqueda binaria.
 * Orden de atención generado por el algoritmo voraz.
 * Explicación numerada de cada algoritmo en lenguaje sencillo.
+* Promedio de ejecución de cada algoritmo, medido con ocho elementos y 1.000 repeticiones.
+
+Los tiempos se muestran como referencia. Como cada algoritmo resuelve una tarea distinta, no deben interpretarse como una comparación definitiva de cuál es mejor.
 
 Ejemplo:
 

@@ -619,6 +619,21 @@ y la propuesta de atención. Cada uno elige o compara datos de una forma
 distinta, explicada paso a paso arriba.
 """)
 
+    print("COMPARACIÓN DE TIEMPOS DE EJECUCIÓN")
+    print(
+        f"Promedio de {resultado['repeticiones_comparacion']} repeticiones "
+        f"con {resultado['elementos_comparacion']} elementos:"
+    )
+
+    for nombre, tiempo in resultado["tiempos_comparacion"].items():
+        print(f"- {nombre}: {tiempo:.3f} microsegundos por ejecución")
+
+    print("""
+La comparación es orientativa: cada algoritmo realiza una tarea distinta.
+Los tiempos pueden variar según el equipo y no demuestran por sí solos
+que un algoritmo sea mejor que otro.
+""")
+
 
 def mostrar_ayuda():
 
@@ -642,7 +657,15 @@ INCIDENCIAS
 - Tiempo: horas y minutos; los minutos van de 0 a 59 y el total debe ser mayor que cero.
 - Estado: Pendiente, En proceso o Finalizado.
 """)
-    input("\nPresione ENTER para volver al menú...")
+    leer_input("\nPresione ENTER para volver al menú")
+
+
+def ejecutar_accion(accion):
+
+    try:
+        accion()
+    except CancelarFlujo:
+        print("\nOperación cancelada. Volviendo al menú principal.")
 
 
 
@@ -675,51 +698,51 @@ def menu():
 
         if opcion == "1":
 
-            menu_registrar_equipo()
+            ejecutar_accion(menu_registrar_equipo)
 
         elif opcion == "2":
 
-            menu_registrar_incidencia()
+            ejecutar_accion(menu_registrar_incidencia)
 
         elif opcion == "3":
 
-            mostrar_equipos()
+            ejecutar_accion(mostrar_equipos)
 
         elif opcion == "4":
 
-            mostrar_incidencias()
+            ejecutar_accion(mostrar_incidencias)
 
         elif opcion == "5":
 
-            menu_buscar()
+            ejecutar_accion(menu_buscar)
 
         elif opcion == "6":
 
-            menu_ordenar_prioridad()
+            ejecutar_accion(menu_ordenar_prioridad)
 
         elif opcion == "7":
 
-            menu_ordenar_tiempo()
+            ejecutar_accion(menu_ordenar_tiempo)
 
         elif opcion == "8":
 
-            menu_planificar()
+            ejecutar_accion(menu_planificar)
 
         elif opcion == "9":
 
-            menu_actualizar_estado()
+            ejecutar_accion(menu_actualizar_estado)
 
         elif opcion == "10":
 
-            menu_estadisticas()
+            ejecutar_accion(menu_estadisticas)
 
         elif opcion == "11":
 
-            menu_demostracion()
+            ejecutar_accion(menu_demostracion)
 
         elif opcion.upper() == "H":
 
-            mostrar_ayuda()
+            ejecutar_accion(mostrar_ayuda)
 
         elif opcion == "0":
 

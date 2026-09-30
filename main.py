@@ -128,7 +128,7 @@ Estado   : Operativo
     else:
 
         print(
-            "\n⚠ ERROR: No se pudo registrar "
+            "\nERROR: No se pudo registrar "
             "el equipo."
         )
 
@@ -260,7 +260,7 @@ Estado     : Pendiente
     else:
 
         print(
-            "\n⚠ ERROR: No se pudo registrar "
+            "\nERROR: No se pudo registrar "
             "la incidencia."
         )
 
@@ -634,6 +634,164 @@ Los tiempos pueden variar según el equipo y no demuestran por sí solos
 que un algoritmo sea mejor que otro.
 """)
 
+def menu_recursivo():
+
+    print("\n")
+    print("=" * 80)
+    print("                 ALGORITMO RECURSIVO")
+    print("=" * 80)
+
+    cantidad = contar_pendientes_recursivo(incidencias)
+
+    print(
+        f"\nCantidad de incidencias pendientes: {cantidad}"
+    )
+
+    print("""
+MÉTODO UTILIZADO
+
+Se utiliza recursividad para recorrer las incidencias.""")
+
+
+def menu_voraz():
+
+    print("\n")
+    print("=" * 80)
+    print("                  ALGORITMO VORAZ")
+    print("=" * 80)
+
+    print("""
+El algoritmo seleccionará las incidencias
+de mayor prioridad primero.
+
+Debe indicar el tiempo disponible
+para realizar los mantenimientos.
+""")
+
+    tiempo_disponible = validar_entero("Tiempo disponible en minutos: ", 1)
+
+    resultado, tiempo_usado = planificar_voraz(tiempo_disponible)
+
+    print("\n")
+    print("=" * 80)
+    print("              PLANIFICACIÓN VORAZ")
+    print("=" * 80)
+
+    if not resultado:
+
+        print(
+            "\nNo se encontraron incidencias "
+            "que puedan ser atendidas."
+        )
+
+    else:
+
+        posicion = 1
+
+        for incidencia in resultado:
+
+            print(
+                f"\n{posicion}. "
+                f"SKU: {incidencia['sku_equipo']}"
+            )
+
+            print(
+                f"   Problema: {incidencia['problema']}"
+            )
+
+            print(
+                f"   Prioridad: {incidencia['prioridad']}"
+            )
+
+            print(
+                f"   Tiempo: "
+                f"{incidencia['tiempo_estimado']} minutos"
+            )
+
+            posicion += 1
+
+        print(
+            f"\nTiempo utilizado: "
+            f"{tiempo_usado} minutos"
+        )
+
+        print(
+            f"Tiempo disponible: "
+            f"{tiempo_disponible} minutos"
+        )
+
+
+def menu_backtracking():
+
+    print("\n")
+    print("=" * 80)
+    print("                 ALGORITMO BACKTRACKING")
+    print("=" * 80)
+
+    print("""
+El algoritmo buscará la mejor combinación
+de incidencias sin superar el tiempo disponible.
+
+A diferencia del algoritmo voraz,
+Backtracking analiza diferentes combinaciones.
+""")
+
+    tiempo_disponible = validar_entero("Tiempo disponible en minutos: ",1)
+
+    resultado, tiempo_usado, prioridad_total = (planificar_backtracking(tiempo_disponible))
+
+    print("\n")
+    print("=" * 80)
+    print("             PLANIFICACIÓN BACKTRACKING")
+    print("=" * 80)
+
+    if not resultado:
+
+        print(
+            "\nNo se encontraron incidencias "
+            "para la planificación."
+        )
+
+    else:
+
+        posicion = 1
+
+        for incidencia in resultado:
+
+            print(
+                f"\n{posicion}. "
+                f"SKU: {incidencia['sku_equipo']}"
+            )
+
+            print(
+                f"   Problema: {incidencia['problema']}"
+            )
+
+            print(
+                f"   Prioridad: {incidencia['prioridad']}"
+            )
+
+            print(
+                f"   Tiempo: "
+                f"{incidencia['tiempo_estimado']} minutos"
+            )
+
+            posicion += 1
+
+        print(
+            f"\nTiempo utilizado: "
+            f"{tiempo_usado} minutos"
+        )
+
+        print(
+            f"Prioridad acumulada: "
+            f"{prioridad_total}"
+        )
+
+        print(
+            f"Tiempo disponible: "
+            f"{tiempo_disponible} minutos"
+        )
 
 def mostrar_ayuda():
 
@@ -688,6 +846,9 @@ def menu():
             9. Actualizar estado
             10. Mostrar estadísticas
             11. Demostración de algoritmos
+            12. Algoritmo recursivo
+            13. Algoritmo voraz
+            14. Algoritmo Backtracking
             H. Ayuda
             0. Salir
         """)
@@ -739,6 +900,18 @@ def menu():
         elif opcion == "11":
 
             ejecutar_accion(menu_demostracion)
+
+        elif opcion == "12":
+        
+            menu_recursivo()
+        
+        elif opcion == "13":
+        
+            menu_voraz()
+        
+        elif opcion == "14":
+        
+            menu_backtracking()
 
         elif opcion.upper() == "H":
 

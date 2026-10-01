@@ -1475,56 +1475,371 @@ def contar_pendientes_recursivo(lista, indice=0):
     )
 
 
-def planificar_voraz(tiempo_disponible):
+def planificar_voraz_detallado(
+    tiempo_disponible,
+    pendientes=None,
+    criterio="prioridad",
+):
+    """Planifica incidencias y conserva el motivo de cada decisión.
 
-    pendientes = []
+    El criterio voraz ordena por prioridad descendente y, en empate, por
+    duración ascendente e ID. El criterio ``tiempo`` permite comparar una
+    estrategia que atiende primero las incidencias de menor duración.
+    """
+    if (
+        not isinstance(tiempo_disponible, int)
+        or isinstance(tiempo_disponible, bool)
+        or tiempo_disponible < 0
+    ):
+        raise ValueError("El tiempo disponible debe ser un entero no negativo.")
 
-    for incidencia in incidencias:
+    if criterio not in ("prioridad", "tiempo"):
+        raise ValueError("El criterio debe ser 'prioridad' o 'tiempo'.")
 
-        if incidencia["estado"] == "Pendiente":
-            pendientes.append(incidencia.copy())
+    fuente = incidencias if pendientes is None else pendientes
+    candidatas = [
+        incidencia.copy()
+        for incidencia in fuente
+        if incidencia.get("estado", "Pendiente") == "Pendiente"
+    ]
 
-    # Ordenar por prioridad descendente
-    # y, en caso de empate, por menor tiempo
-    n = len(pendientes)
-
-    for i in range(n):
-
-        for j in range(0, n - i - 1):
-
-            prioridad_actual = pendientes[j]["prioridad"]
-            prioridad_siguiente = pendientes[j + 1]["prioridad"]
-
-            tiempo_actual = pendientes[j]["tiempo_estimado"]
-            tiempo_siguiente = pendientes[j + 1]["tiempo_estimado"]
-
-            if (
-                prioridad_actual < prioridad_siguiente
-                or (
-                    prioridad_actual == prioridad_siguiente
-                    and tiempo_actual > tiempo_siguiente
-                )
-            ):
-
-                pendientes[j], pendientes[j + 1] = (
-                    pendientes[j + 1],
-                    pendientes[j]
-                )
+    if criterio == "prioridad":
+        ordenadas = planificar_por_prioridad(candidatas)
+    else:
+        ordenadas = ordenar_por_tiempo(candidatas)
 
     seleccionadas = []
+    descartadas = []
+    decisiones = []
     tiempo_usado = 0
 
-    for incidencia in pendientes:
+    for incidencia in ordenadas:
+        tiempo_restante = tiempo_disponible - tiempo_usado
+        duracion = incidencia["tiempo_estimado"]
+        cabe_en_tiempo = duracion <= tiempo_restante
 
-        tiempo = incidencia["tiempo_estimado"]
-
-        if tiempo_usado + tiempo <= tiempo_disponible:
-
+        if cabe_en_tiempo:
             seleccionadas.append(incidencia)
+            tiempo_usado += duracion
+            motivo = (
+                f"Seleccionada: requiere {duracion} min y caben "
+                f"en los {tiempo_restante} min restantes."
+            )
+        else:
+            descartadas.append(incidencia)
+            motivo = (
+                f"Descartada: requiere {duracion} min y solo quedan "
+                f"{tiempo_restante} min."
+            )
 
-            tiempo_usado += tiempo
+        decisiones.append({
+            "incidencia": incidencia,
+            "seleccionada": cabe_en_tiempo,
+            "motivo": motivo,
+            "tiempo_restante": tiempo_disponible - tiempo_usado,
+        })
 
-    return seleccionadas, tiempo_usado
+    return {
+        "criterio": criterio,
+        "tiempo_disponible": tiempo_disponible,
+        "incidencias_pendientes": candidatas,
+        "seleccionadas": seleccionadas,
+        "descartadas": descartadas,
+        "decisiones": decisiones,
+        "tiempo_usado": tiempo_usado,
+        "tiempo_restante": tiempo_disponible - tiempo_usado,
+    }
+
+
+def planificar_voraz(tiempo_disponible):
+    """Conserva la interfaz histórica de lista seleccionada y tiempo usado."""
+    resultado = planificar_voraz_detallado(tiempo_disponible)
+    return resultado["seleccionadas"], resultado["tiempo_usado"]
+
+
+def planificar_backtracking_detallado(
+    tiempo_disponible,
+    pendientes=None,
+    max_historial=5000,
+):
+    """Busca la mejor combinación factible y registra la exploración.
+
+    Función objetivo lexicográfica: primero maximiza la cantidad de
+    incidencias; luego la suma de prioridades (ponderación existente 1-5);
+    finalmente minimiza los minutos de mantenimiento. Solo usa incidencias
+    Pendientes y la suma de sus duraciones no supera el presupuesto.
+    """
+    if (
+        not isinstance(tiempo_disponible, int)
+        or isinstance(tiempo_disponible, bool)
+        or tiempo_disponible < 0
+    ):
+        raise ValueError("El tiempo disponible debe ser un entero no negativo.")
+    if (
+        not isinstance(max_historial, int)
+        or isinstance(max_historial, bool)
+        or max_historial < 1
+    ):
+        raise ValueError("El límite del historial debe ser un entero positivo.")
+
+    fuente = incidencias if pendientes is None else pendientes
+    candidatas = [
+        incidencia.copy()
+        for incidencia in fuente
+        if incidencia.get("estado", "Pendiente") == "Pendiente"
+    ]
+    for incidencia in candidatas:
+        if (
+            not isinstance(incidencia.get("tiempo_estimado"), int)
+            or isinstance(incidencia.get("tiempo_estimado"), bool)
+            or incidencia["tiempo_estimado"] < 1
+            or not isinstance(incidencia.get("prioridad"), int)
+            or isinstance(incidencia.get("prioridad"), bool)
+            or not 1 <= incidencia["prioridad"] <= 5
+            or "id" not in incidencia
+        ):
+            raise ValueError("Hay una incidencia pendiente con datos inválidos.")
+
+    contexto = {
+        "nodos_explorados": 0,
+        "ramas_podadas": 0,
+        "podas_por_tiempo": 0,
+        "podas_por_cota": 0,
+        "retrocesos": 0,
+        "soluciones_evaluadas": 0,
+        "historial": [],
+        "eventos_totales": 0,
+        "soluciones": [],
+        "soluciones_totales": 0,
+        "siguiente_nodo": 0,
+        "max_historial": max_historial,
+        "mejor": {
+            "seleccionadas": [],
+            "tiempo": 0,
+            "prioridad": 0,
+            "nodo": None,
+            "camino": [],
+        },
+    }
+
+    def registrar(evento):
+        contexto["eventos_totales"] += 1
+        if len(contexto["historial"]) < max_historial:
+            contexto["historial"].append(evento)
+
+    def clave_solucion(seleccionadas, tiempo, prioridad):
+        return len(seleccionadas), prioridad, -tiempo
+
+    def registrar_nodo(
+        indice,
+        seleccionadas,
+        tiempo,
+        prioridad,
+        padre,
+        decision,
+        camino,
+        incidencia=None,
+        tiempo_excedido=False,
+    ):
+        contexto["siguiente_nodo"] += 1
+        contexto["nodos_explorados"] += 1
+        nodo = {
+            "tipo": "nodo",
+            "nodo": contexto["siguiente_nodo"],
+            "padre": padre,
+            "profundidad": indice,
+            "id_incidencia": incidencia["id"] if incidencia else None,
+            "decision": decision,
+            "tiempo_acumulado": tiempo,
+            "seleccionadas": [item["id"] for item in seleccionadas],
+            "mejor_cantidad": len(contexto["mejor"]["seleccionadas"]),
+            "mejor_prioridad": contexto["mejor"]["prioridad"],
+            "mejor_tiempo": contexto["mejor"]["tiempo"],
+            "podada": tiempo_excedido,
+            "solucion_final": False,
+        }
+        registrar(nodo)
+        return nodo
+
+    def buscar(indice, seleccionadas, tiempo, prioridad, padre, decision, camino):
+        nodo = registrar_nodo(
+            indice,
+            seleccionadas,
+            tiempo,
+            prioridad,
+            padre,
+            decision,
+            camino,
+            candidatas[indice] if indice < len(candidatas) else None,
+        )
+        camino_actual = camino + [nodo["nodo"]]
+
+        if indice == len(candidatas):
+            contexto["soluciones_evaluadas"] += 1
+            contexto["soluciones_totales"] += 1
+            mejor = contexto["mejor"]
+            actual = clave_solucion(seleccionadas, tiempo, prioridad)
+            if mejor["nodo"] is None or actual > clave_solucion(
+                mejor["seleccionadas"],
+                mejor["tiempo"],
+                mejor["prioridad"],
+            ):
+                mejor.update({
+                    "seleccionadas": seleccionadas.copy(),
+                    "tiempo": tiempo,
+                    "prioridad": prioridad,
+                    "nodo": nodo["nodo"],
+                    "camino": camino_actual.copy(),
+                })
+                nodo.update({
+                    "solucion_final": True,
+                    "mejor_cantidad": len(seleccionadas),
+                    "mejor_prioridad": prioridad,
+                    "mejor_tiempo": tiempo,
+                })
+            if len(contexto["soluciones"]) < max_historial:
+                contexto["soluciones"].append({
+                    "cantidad": len(seleccionadas),
+                    "prioridad": prioridad,
+                    "tiempo": tiempo,
+                    "ids": [item["id"] for item in seleccionadas],
+                })
+            return
+
+        restantes = candidatas[indice:]
+        cantidad_maxima = len(seleccionadas) + len(restantes)
+        mejor_cantidad = len(contexto["mejor"]["seleccionadas"])
+        motivo_poda = None
+
+        if cantidad_maxima < mejor_cantidad:
+            motivo_poda = "poda-cantidad"
+        elif cantidad_maxima == mejor_cantidad:
+            necesarias = mejor_cantidad - len(seleccionadas)
+            prioridades_optimistas = sorted(
+                (item["prioridad"] for item in restantes),
+                reverse=True,
+            )
+            prioridad_maxima = prioridad + sum(
+                prioridades_optimistas[:necesarias]
+            )
+            mejor_prioridad = contexto["mejor"]["prioridad"]
+            if prioridad_maxima < mejor_prioridad:
+                motivo_poda = "poda-prioridad"
+            elif prioridad_maxima == mejor_prioridad:
+                duraciones_optimistas = sorted(
+                    item["tiempo_estimado"] for item in restantes
+                )
+                tiempo_minimo = tiempo + sum(
+                    duraciones_optimistas[:necesarias]
+                )
+                if tiempo_minimo >= contexto["mejor"]["tiempo"]:
+                    motivo_poda = "poda-tiempo-minimo"
+
+        if motivo_poda:
+            nodo["podada"] = True
+            nodo["motivo_poda"] = motivo_poda
+            contexto["ramas_podadas"] += 1
+            contexto["podas_por_cota"] += 1
+            return
+
+        incidencia = candidatas[indice]
+        nuevo_tiempo = tiempo + incidencia["tiempo_estimado"]
+        if nuevo_tiempo <= tiempo_disponible:
+            seleccionadas.append(incidencia)
+            buscar(
+                indice + 1,
+                seleccionadas,
+                nuevo_tiempo,
+                prioridad + incidencia["prioridad"],
+                nodo["nodo"],
+                f"incluir ID {incidencia['id']}",
+                camino_actual,
+            )
+            seleccionadas.pop()
+            contexto["retrocesos"] += 1
+            registrar({
+                "tipo": "retroceso",
+                "nodo": nodo["nodo"],
+                "id_incidencia": incidencia["id"],
+                "tiempo_acumulado": tiempo,
+                "seleccionadas": [item["id"] for item in seleccionadas],
+            })
+        else:
+            podado = registrar_nodo(
+                indice + 1,
+                seleccionadas + [incidencia],
+                nuevo_tiempo,
+                prioridad + incidencia["prioridad"],
+                nodo["nodo"],
+                f"poda-tiempo al incluir ID {incidencia['id']}",
+                camino_actual,
+                incidencia,
+                tiempo_excedido=True,
+            )
+            podado["motivo_poda"] = "supera el presupuesto disponible"
+            contexto["ramas_podadas"] += 1
+            contexto["podas_por_tiempo"] += 1
+
+        buscar(
+            indice + 1,
+            seleccionadas,
+            tiempo,
+            prioridad,
+            nodo["nodo"],
+            f"excluir ID {incidencia['id']}",
+            camino_actual,
+        )
+        contexto["retrocesos"] += 1
+        registrar({
+            "tipo": "retroceso",
+            "nodo": nodo["nodo"],
+            "id_incidencia": incidencia["id"],
+            "tiempo_acumulado": tiempo,
+            "seleccionadas": [item["id"] for item in seleccionadas],
+        })
+
+    buscar(0, [], 0, 0, None, "inicio", [])
+    mejor = contexto["mejor"]
+    ids_seleccionadas = {item["id"] for item in mejor["seleccionadas"]}
+    nodos_historial = {
+        evento["nodo"]: evento
+        for evento in contexto["historial"]
+        if evento.get("tipo") == "nodo"
+    }
+    for nodo_id in mejor["camino"]:
+        if nodo_id in nodos_historial:
+            nodos_historial[nodo_id]["solucion_final"] = True
+
+    return {
+        "tiempo_disponible": tiempo_disponible,
+        "incidencias_pendientes": candidatas,
+        "seleccionadas": mejor["seleccionadas"],
+        "no_seleccionadas": [
+            incidencia for incidencia in candidatas
+            if incidencia["id"] not in ids_seleccionadas
+        ],
+        "tiempo_usado": mejor["tiempo"],
+        "tiempo_restante": tiempo_disponible - mejor["tiempo"],
+        "prioridad_total": mejor["prioridad"],
+        "nodos_explorados": contexto["nodos_explorados"],
+        "ramas_podadas": contexto["ramas_podadas"],
+        "podas_por_tiempo": contexto["podas_por_tiempo"],
+        "podas_por_cota": contexto["podas_por_cota"],
+        "retrocesos": contexto["retrocesos"],
+        "soluciones_evaluadas": contexto["soluciones_evaluadas"],
+        "soluciones_totales": contexto["soluciones_totales"],
+        "soluciones": contexto["soluciones"],
+        "historial": contexto["historial"],
+        "eventos_totales": contexto["eventos_totales"],
+        "historial_truncado": contexto["eventos_totales"] > max_historial,
+        "nodo_solucion": mejor["nodo"],
+        "camino_solucion": mejor["camino"],
+        "ponderacion_prioridad": "Suma de los valores existentes: 1=Baja a 5=Crítica.",
+        "funcion_objetivo": (
+            "Maximizar cantidad; luego suma de prioridades; "
+            "finalmente minimizar duración total."
+        ),
+    }
 
 
 def backtracking_mantenimiento(
@@ -1533,95 +1848,32 @@ def backtracking_mantenimiento(
     indice=0,
     seleccion_actual=None,
     tiempo_actual=0,
-    prioridad_actual=0
+    prioridad_actual=0,
 ):
-
-    if seleccion_actual is None:
-        seleccion_actual = []
-
-    # Caso base
-    if indice >= len(pendientes):
-
-        return (
-            seleccion_actual.copy(),
-            tiempo_actual,
-            prioridad_actual
-        )
-
-    # Mejor solución encontrada hasta el momento
-    mejor_lista = seleccion_actual.copy()
-    mejor_tiempo = tiempo_actual
-    mejor_prioridad = prioridad_actual
-
-    incidencia = pendientes[indice]
-
-    tiempo = incidencia["tiempo_estimado"]
-    prioridad = incidencia["prioridad"]
-
-    # RAMA 1: INCLUIR LA INCIDENCIA
-
-    if tiempo_actual + tiempo <= tiempo_disponible:
-
-        seleccion_actual.append(incidencia)
-
-        lista_incluida, tiempo_incluido, prioridad_incluida = (
-            backtracking_mantenimiento(
-                pendientes,
-                tiempo_disponible,
-                indice + 1,
-                seleccion_actual,
-                tiempo_actual + tiempo,
-                prioridad_actual + prioridad
-            )
-        )
-
-        seleccion_actual.pop()
-
-        if prioridad_incluida > mejor_prioridad:
-
-            mejor_lista = lista_incluida
-            mejor_tiempo = tiempo_incluido
-            mejor_prioridad = prioridad_incluida
-
-
-    #RAMA 2: NO INCLUIR LA INCIDENCIA
-
-
-    lista_sin, tiempo_sin, prioridad_sin = (
-        backtracking_mantenimiento(
-            pendientes,
-            tiempo_disponible,
-            indice + 1,
-            seleccion_actual,
-            tiempo_actual,
-            prioridad_actual
-        )
+    """Mantiene el retorno histórico usando el motor optimizador actualizado."""
+    seleccion_inicial = list(seleccion_actual or [])
+    candidatas = pendientes[indice:]
+    presupuesto_restante = tiempo_disponible - tiempo_actual
+    if presupuesto_restante < 0:
+        return seleccion_inicial, tiempo_actual, prioridad_actual
+    resultado = planificar_backtracking_detallado(
+        presupuesto_restante,
+        candidatas,
     )
-
-    if prioridad_sin > mejor_prioridad:
-
-        mejor_lista = lista_sin
-        mejor_tiempo = tiempo_sin
-        mejor_prioridad = prioridad_sin
-
+    seleccion_final = seleccion_inicial + resultado["seleccionadas"]
     return (
-        mejor_lista,
-        mejor_tiempo,
-        mejor_prioridad
+        seleccion_final,
+        tiempo_actual + resultado["tiempo_usado"],
+        prioridad_actual + resultado["prioridad_total"],
     )
 
 
 def planificar_backtracking(tiempo_disponible):
-
-    pendientes = []
-
-    for incidencia in incidencias:
-
-        if incidencia["estado"] == "Pendiente":
-            pendientes.append(incidencia.copy())
-
-    return backtracking_mantenimiento(
-        pendientes,
-        tiempo_disponible
+    """Conserva el retorno histórico: incidencias, minutos y prioridad total."""
+    resultado = planificar_backtracking_detallado(tiempo_disponible)
+    return (
+        resultado["seleccionadas"],
+        resultado["tiempo_usado"],
+        resultado["prioridad_total"],
     )
 

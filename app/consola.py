@@ -7,6 +7,10 @@ Created on Tue Sep  8 21:08:08 2026
 import time
 
 from core.metodos import *
+from interfaz.graficos import (
+    mostrar_graficos_backtracking,
+    mostrar_graficos_planificacion,
+)
 
 def mostrar_equipos():
 
@@ -737,77 +741,241 @@ para realizar los mantenimientos.
         )
 
 
-def menu_backtracking():
+def _distribucion_prioridades(lista):
+    etiquetas = {
+        1: "Baja",
+        2: "Media",
+        3: "Normal",
+        4: "Alta",
+        5: "Crítica",
+    }
+    cantidades = {prioridad: 0 for prioridad in etiquetas}
+    for incidencia in lista:
+        prioridad = incidencia["prioridad"]
+        if prioridad in cantidades:
+            cantidades[prioridad] += 1
+    return ", ".join(
+        f"{etiquetas[prioridad]}: {cantidad}"
+        for prioridad, cantidad in cantidades.items()
+    )
 
-    print("\n")
-    print("=" * 80)
-    print("                 ALGORITMO BACKTRACKING")
-    print("=" * 80)
 
-    print("""
-El algoritmo buscará la mejor combinación
-de incidencias sin superar el tiempo disponible.
+def menu_planificar_graficos():
+    print("\nPLANIFICAR MANTENIMIENTO CON ALGORITMO VORAZ")
+    print("Prioridad mayor primero; en empate, menor duración e ID.")
+    tiempo_disponible = validar_entero(
+        "Tiempo disponible del técnico (minutos): ",
+        1,
+    )
 
-A diferencia del algoritmo voraz,
-Backtracking analiza diferentes combinaciones.
-""")
+    inicio = time.perf_counter()
+    greedy = planificar_voraz_detallado(tiempo_disponible)
+    menor_tiempo = planificar_voraz_detallado(
+        tiempo_disponible,
+        criterio="tiempo",
+    )
+    duracion_ejecucion = time.perf_counter() - inicio
 
-    tiempo_disponible = validar_entero("Tiempo disponible en minutos: ",1)
-
-    resultado, tiempo_usado, prioridad_total = (planificar_backtracking(tiempo_disponible))
-
-    print("\n")
-    print("=" * 80)
-    print("             PLANIFICACIÓN BACKTRACKING")
-    print("=" * 80)
-
-    if not resultado:
-
+    print("\nDECISIONES DEL ALGORITMO VORAZ")
+    if not greedy["decisiones"]:
+        print("No hay incidencias pendientes para planificar.")
+    for decision in greedy["decisiones"]:
+        incidencia = decision["incidencia"]
+        resultado = "SELECCIONADA" if decision["seleccionada"] else "DESCARTADA"
         print(
-            "\nNo se encontraron incidencias "
-            "para la planificación."
+            f"ID {incidencia['id']} | {incidencia['sku_equipo']} | "
+            f"prioridad {incidencia['prioridad']} | "
+            f"{incidencia['tiempo_estimado']} min | {resultado}"
         )
+        print(f"  Motivo: {decision['motivo']}")
 
+    print("\nORDEN DE ATENCIÓN SELECCIONADO")
+    if greedy["seleccionadas"]:
+        for posicion, incidencia in enumerate(greedy["seleccionadas"], 1):
+            print(
+                f"{posicion}. ID {incidencia['id']} | "
+                f"{incidencia['sku_equipo']} | {incidencia['problema']} | "
+                f"prioridad {incidencia['prioridad']} | "
+                f"{incidencia['tiempo_estimado']} min"
+            )
     else:
+        print("Ninguna incidencia cabe dentro del tiempo disponible.")
 
-        posicion = 1
-
-        for incidencia in resultado:
-
-            print(
-                f"\n{posicion}. "
-                f"SKU: {incidencia['sku_equipo']}"
+    print("\nINCIDENCIAS DESCARTADAS")
+    if greedy["descartadas"]:
+        for incidencia in greedy["descartadas"]:
+            decision = next(
+                dato for dato in greedy["decisiones"]
+                if dato["incidencia"]["id"] == incidencia["id"]
             )
-
             print(
-                f"   Problema: {incidencia['problema']}"
+                f"ID {incidencia['id']} | {incidencia['sku_equipo']} | "
+                f"{incidencia['tiempo_estimado']} min: {decision['motivo']}"
             )
+    else:
+        print("Ninguna; todas las incidencias pendientes fueron seleccionadas.")
 
-            print(
-                f"   Prioridad: {incidencia['prioridad']}"
-            )
+    print("\nRESUMEN DE TIEMPO (mantenimiento, minutos)")
+    print(f"Disponible: {greedy['tiempo_disponible']}")
+    print(f"Utilizado:  {greedy['tiempo_usado']}")
+    print(f"Restante:   {greedy['tiempo_restante']}")
+    print(
+        f"Ejecución de los algoritmos: {duracion_ejecucion:.8f} segundos "
+        "(no es tiempo de mantenimiento)."
+    )
 
-            print(
-                f"   Tiempo: "
-                f"{incidencia['tiempo_estimado']} minutos"
-            )
-
-            posicion += 1
-
+    print("\nCOMPARACIÓN DE ESTRATEGIAS")
+    for nombre, resultado in (
+        ("Prioridad y duración", greedy),
+        ("Menor duración primero", menor_tiempo),
+    ):
         print(
-            f"\nTiempo utilizado: "
-            f"{tiempo_usado} minutos"
+            f"{nombre}: {len(resultado['seleccionadas'])} seleccionadas, "
+            f"{resultado['tiempo_usado']} min usados, "
+            f"{resultado['tiempo_restante']} min restantes."
+        )
+        print(
+            "  Prioridades seleccionadas: "
+            f"{_distribucion_prioridades(resultado['seleccionadas'])}"
         )
 
+    try:
+        mostrar_graficos_planificacion(greedy, menor_tiempo)
+    except ImportError:
         print(
-            f"Prioridad acumulada: "
-            f"{prioridad_total}"
+            "\nNo se encontró Matplotlib. Instala la dependencia con "
+            "'python -m pip install -r requirements.txt'."
         )
 
+
+def menu_backtracking():
+    print("\nPLANIFICAR MANTENIMIENTO CON BACKTRACKING")
+    print(
+        "Objetivo lexicográfico: más incidencias, mayor prioridad total "
+        "(1-5) y menor tiempo total."
+    )
+    tiempo_disponible = validar_entero(
+        "Tiempo disponible del técnico (minutos): ",
+        0,
+    )
+
+    inicio = time.perf_counter()
+    resultado = planificar_backtracking_detallado(tiempo_disponible)
+    tiempo_backtracking = time.perf_counter() - inicio
+    inicio = time.perf_counter()
+    voraz = planificar_voraz_detallado(
+        tiempo_disponible,
+        pendientes=resultado["incidencias_pendientes"],
+    )
+    tiempo_voraz = time.perf_counter() - inicio
+
+    print("\nINCIDENCIAS SELECCIONADAS")
+    if resultado["seleccionadas"]:
+        for posicion, incidencia in enumerate(resultado["seleccionadas"], 1):
+            print(
+                f"{posicion}. ID {incidencia['id']} | "
+                f"{incidencia.get('sku_equipo', 'Sin SKU')} | "
+                f"{incidencia.get('problema', 'Sin descripción')} | "
+                f"Prioridad {incidencia['prioridad']} | "
+                f"{incidencia['tiempo_estimado']} min"
+            )
+    else:
+        print("Ninguna incidencia seleccionada.")
+
+    print("\nINCIDENCIAS NO SELECCIONADAS")
+    if resultado["no_seleccionadas"]:
+        for incidencia in resultado["no_seleccionadas"]:
+            print(
+                f"ID {incidencia['id']} | "
+                f"{incidencia.get('sku_equipo', 'Sin SKU')} | "
+                f"Prioridad {incidencia['prioridad']} | "
+                f"{incidencia['tiempo_estimado']} min"
+            )
+    else:
+        print("Ninguna.")
+
+    print("\nCOMPARACIÓN DE ESTRATEGIAS")
+    print(
+        f"{'Método':<22} {'Cantidad':>8} {'Prioridad':>10} "
+        f"{'Usado':>8} {'Restante':>9} {'Ejecución':>14}"
+    )
+    for nombre, plan, duracion in (
+        ("Backtracking", resultado, tiempo_backtracking),
+        ("Greedy", voraz, tiempo_voraz),
+    ):
+        seleccionadas = plan["seleccionadas"]
+        prioridad_total = sum(item["prioridad"] for item in seleccionadas)
         print(
-            f"Tiempo disponible: "
-            f"{tiempo_disponible} minutos"
+            f"{nombre:<22} {len(seleccionadas):>8} "
+            f"{prioridad_total:>10} {plan['tiempo_usado']:>8} "
+            f"{tiempo_disponible - plan['tiempo_usado']:>9} "
+            f"{duracion:>11.8f} s"
         )
+        print(f"  Prioridades: {_distribucion_prioridades(seleccionadas)}")
+
+    print(
+        f"\nNodos: {resultado['nodos_explorados']} | "
+        f"Soluciones evaluadas: {resultado['soluciones_evaluadas']} | "
+        f"Retrocesos: {resultado['retrocesos']} | "
+        f"Ramas podadas: {resultado['ramas_podadas']} "
+        f"(por tiempo: {resultado['podas_por_tiempo']}, "
+        f"por cota: {resultado['podas_por_cota']})"
+    )
+    print(
+        "Prioridad total = suma directa de los valores existentes: "
+        "1 (Baja) a 5 (Crítica)."
+    )
+    print(
+        "Peor caso: O(2^n) tiempo y O(n) de pila recursiva; la poda puede "
+        "reducir nodos en esta ejecución, pero no cambia el peor caso."
+    )
+
+    if resultado["historial"] and confirmar_accion(
+        "¿Consultar una muestra del historial de decisiones?"
+    ):
+        limite = min(60, len(resultado["historial"]))
+        cantidad = validar_entero(
+            f"Cantidad de eventos a mostrar (1-{limite}): ",
+            1,
+            limite,
+        )
+        for evento in resultado["historial"][:cantidad]:
+            if evento["tipo"] == "nodo":
+                print(
+                    f"Nodo {evento['nodo']} | profundidad {evento['profundidad']} | "
+                    f"{evento['decision']} | tiempo {evento['tiempo_acumulado']} | "
+                    f"seleccionadas {evento['seleccionadas']} | mejor "
+                    f"{evento['mejor_cantidad']}/{evento['mejor_prioridad']}/"
+                    f"{evento['mejor_tiempo']}"
+                    + (
+                        f" | PODA: {evento.get('motivo_poda')}"
+                        if evento.get("podada") else ""
+                    )
+                )
+            else:
+                print(
+                    f"Retroceso en nodo {evento['nodo']} tras incidencia "
+                    f"{evento['id_incidencia']}"
+                )
+        if resultado["historial_truncado"]:
+            print(
+                f"Historial limitado a {len(resultado['historial'])} eventos "
+                f"de {resultado['eventos_totales']} generados."
+            )
+
+    if confirmar_accion("¿Mostrar los gráficos de esta ejecución?"):
+        try:
+            mostrar_graficos_backtracking(
+                resultado,
+                voraz,
+                tiempo_backtracking,
+                tiempo_voraz,
+            )
+        except ImportError:
+            print(
+                "No se encontró Matplotlib. Instala con "
+                "'python -m pip install -r requirements.txt'."
+            )
 
 def mostrar_ayuda():
 
@@ -864,7 +1032,8 @@ def menu():
             11. Demostración de algoritmos
             12. Algoritmo recursivo
             13. Algoritmo voraz
-            14. Algoritmo Backtracking
+            14. Planificar mantenimiento con Backtracking
+            15. Planificar mantenimiento con algoritmo voraz
             H. Ayuda
             0. Salir
         """)
@@ -929,6 +1098,10 @@ def menu():
         
             menu_backtracking()
 
+        elif opcion == "15":
+
+            ejecutar_accion(menu_planificar_graficos)
+
         elif opcion.upper() == "H":
 
             ejecutar_accion(mostrar_ayuda)
@@ -941,7 +1114,7 @@ def menu():
 
         else:
             print("\nALERTA: Opción inválida." )
-            print("Seleccione una opción del 0 al 11 o H para ayuda.")
+            print("Seleccione una opción del 0 al 15 o H para ayuda.")
 
 if __name__ == "__main__":
 

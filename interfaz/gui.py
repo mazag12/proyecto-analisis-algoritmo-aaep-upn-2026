@@ -1,7 +1,12 @@
 import tkinter as tk
+import time
 from tkinter import messagebox, simpledialog, ttk
 
 from core import metodos as servicio
+from interfaz.graficos import (
+    mostrar_graficos_backtracking,
+    mostrar_graficos_planificacion,
+)
 
 
 AYUDA_ESTADOS = {
@@ -42,15 +47,21 @@ class MantenimientoGUI:
         self.pestanas.pack(fill="both", expand=True, padx=18, pady=(0, 18))
 
         self.tab_incidencias = ttk.Frame(self.pestanas, padding=12)
+        self.tab_planificacion = ttk.Frame(self.pestanas, padding=18)
+        self.tab_backtracking = ttk.Frame(self.pestanas, padding=18)
         self.tab_equipos = ttk.Frame(self.pestanas, padding=12)
         self.tab_nuevo_equipo = ttk.Frame(self.pestanas, padding=18)
         self.tab_nueva_incidencia = ttk.Frame(self.pestanas, padding=18)
         self.pestanas.add(self.tab_incidencias, text="Incidencias")
+        self.pestanas.add(self.tab_planificacion, text="Planificación voraz")
+        self.pestanas.add(self.tab_backtracking, text="Backtracking")
         self.pestanas.add(self.tab_equipos, text="Equipos")
         self.pestanas.add(self.tab_nuevo_equipo, text="Registrar equipo")
         self.pestanas.add(self.tab_nueva_incidencia, text="Registrar incidencia")
 
         self._crear_tab_incidencias()
+        self._crear_tab_planificacion()
+        self._crear_tab_backtracking()
         self._crear_tab_equipos()
         self._crear_formulario_equipo()
         self._crear_formulario_incidencia()
@@ -133,6 +144,377 @@ class MantenimientoGUI:
             self.tabla_equipos.heading(columna, text=titulo)
             self.tabla_equipos.column(columna, width=ancho, anchor="w")
         self.tabla_equipos.pack(fill="both", expand=True)
+
+    def _crear_tab_planificacion(self):
+        ttk.Label(
+            self.tab_planificacion,
+            text="Planificar mantenimiento con algoritmo voraz",
+            style="Title.TLabel"
+        ).pack(anchor="w", pady=(0, 8))
+        ttk.Label(
+            self.tab_planificacion,
+            text=(
+                "Ordena por prioridad descendente; para prioridades iguales, "
+                "usa menor duración e ID. Solo selecciona trabajos que caben "
+                "en el tiempo disponible."
+            ),
+            wraplength=900
+        ).pack(anchor="w", pady=(0, 12))
+
+        controles = ttk.Frame(self.tab_planificacion)
+        controles.pack(fill="x", pady=(0, 12))
+        ttk.Label(controles, text="Tiempo del técnico (minutos)").pack(side="left")
+        self.tiempo_disponible_plan = tk.StringVar(value="120")
+        ttk.Spinbox(
+            controles,
+            from_=1,
+            to=100000,
+            textvariable=self.tiempo_disponible_plan,
+            width=10
+        ).pack(side="left", padx=8)
+        ttk.Button(
+            controles,
+            text="Calcular plan",
+            command=self.calcular_plan_voraz
+        ).pack(side="left", padx=(0, 8))
+        self.boton_graficos = ttk.Button(
+            controles,
+            text="Ver gráficos",
+            command=self.mostrar_graficos_plan,
+            state="disabled"
+        )
+        self.boton_graficos.pack(side="left")
+
+        self.resultado_plan = tk.Text(
+            self.tab_planificacion,
+            height=24,
+            wrap="word",
+            font=("Consolas", 9),
+            state="disabled"
+        )
+        self.resultado_plan.pack(fill="both", expand=True)
+        self.planes_calculados = None
+
+    def _crear_tab_backtracking(self):
+        ttk.Label(
+            self.tab_backtracking,
+            text="Planificar mantenimiento con Backtracking",
+            style="Title.TLabel"
+        ).pack(anchor="w", pady=(0, 8))
+        ttk.Label(
+            self.tab_backtracking,
+            text=(
+                "Busca la combinación que atiende más incidencias; desempata "
+                "por prioridad total (suma de valores 1-5) y luego menor "
+                "tiempo de mantenimiento. Peor caso O(2^n); la poda puede "
+                "reducir nodos, pero no elimina ese peor caso."
+            ),
+            wraplength=900
+        ).pack(anchor="w", pady=(0, 12))
+
+        controles = ttk.Frame(self.tab_backtracking)
+        controles.pack(fill="x", pady=(0, 12))
+        ttk.Label(controles, text="Tiempo del técnico (minutos)").pack(side="left")
+        self.tiempo_disponible_backtracking = tk.StringVar(value="120")
+        ttk.Spinbox(
+            controles,
+            from_=0,
+            to=100000,
+            textvariable=self.tiempo_disponible_backtracking,
+            width=10
+        ).pack(side="left", padx=8)
+        ttk.Button(
+            controles,
+            text="Calcular solución",
+            command=self.calcular_plan_backtracking
+        ).pack(side="left", padx=(0, 8))
+        self.boton_historial_backtracking = ttk.Button(
+            controles,
+            text="Ver historial",
+            command=self.mostrar_historial_backtracking,
+            state="disabled"
+        )
+        self.boton_historial_backtracking.pack(side="left", padx=(0, 8))
+        self.boton_graficos_backtracking = ttk.Button(
+            controles,
+            text="Ver gráficos",
+            command=self.mostrar_graficos_backtracking_gui,
+            state="disabled"
+        )
+        self.boton_graficos_backtracking.pack(side="left")
+
+        self.resultado_backtracking = tk.Text(
+            self.tab_backtracking,
+            height=24,
+            wrap="word",
+            font=("Consolas", 9),
+            state="disabled"
+        )
+        self.resultado_backtracking.pack(fill="both", expand=True)
+        self.resultados_backtracking = None
+
+    def calcular_plan_backtracking(self):
+        try:
+            tiempo_disponible = int(
+                self.tiempo_disponible_backtracking.get()
+            )
+            if tiempo_disponible < 0:
+                raise ValueError
+        except ValueError:
+            messagebox.showerror(
+                "Tiempo inválido",
+                "Ingresa un número entero de minutos igual o mayor que cero."
+            )
+            return
+
+        inicio = time.perf_counter()
+        backtracking = servicio.planificar_backtracking_detallado(
+            tiempo_disponible
+        )
+        tiempo_backtracking = time.perf_counter() - inicio
+        inicio = time.perf_counter()
+        voraz = servicio.planificar_voraz_detallado(
+            tiempo_disponible,
+            pendientes=backtracking["incidencias_pendientes"],
+        )
+        tiempo_voraz = time.perf_counter() - inicio
+        self.resultados_backtracking = (
+            backtracking,
+            voraz,
+            tiempo_backtracking,
+            tiempo_voraz,
+        )
+
+        seleccionadas = backtracking["seleccionadas"]
+        prioridades_backtracking = sum(
+            incidencia["prioridad"] for incidencia in seleccionadas
+        )
+        prioridades_voraz = sum(
+            incidencia["prioridad"]
+            for incidencia in voraz["seleccionadas"]
+        )
+        lineas = ["MEJOR COMBINACIÓN ENCONTRADA"]
+        if seleccionadas:
+            for posicion, incidencia in enumerate(seleccionadas, 1):
+                lineas.append(
+                    f"{posicion}. ID {incidencia['id']} | "
+                    f"{incidencia.get('sku_equipo', 'Sin SKU')} | "
+                    f"{incidencia.get('problema', 'Sin descripción')} | "
+                    f"Prioridad {incidencia['prioridad']} | "
+                    f"{incidencia['tiempo_estimado']} min"
+                )
+        else:
+            lineas.append("Ninguna incidencia cabe en el tiempo disponible.")
+
+        lineas.extend(("", "NO SELECCIONADAS"))
+        lineas.extend(
+            f"ID {incidencia['id']} | "
+            f"{incidencia.get('sku_equipo', 'Sin SKU')} | "
+            f"{incidencia['tiempo_estimado']} min"
+            for incidencia in backtracking["no_seleccionadas"]
+        )
+        if not backtracking["no_seleccionadas"]:
+            lineas.append("Ninguna.")
+
+        lineas.extend(("", "COMPARACIÓN CON GREEDY"))
+        lineas.append(
+            f"Backtracking: {len(seleccionadas)} incidencias, "
+            f"prioridad {prioridades_backtracking}, "
+            f"{backtracking['tiempo_usado']} min usados, "
+            f"{backtracking['tiempo_restante']} min restantes, "
+            f"{tiempo_backtracking:.8f} s de ejecución."
+        )
+        lineas.append(
+            f"  Distribución de prioridades: "
+            f"{self._resumen_prioridades(seleccionadas)}"
+        )
+        lineas.append(
+            f"Greedy: {len(voraz['seleccionadas'])} incidencias, "
+            f"prioridad {prioridades_voraz}, {voraz['tiempo_usado']} min usados, "
+            f"{voraz['tiempo_restante']} min restantes, "
+            f"{tiempo_voraz:.8f} s de ejecución."
+        )
+        lineas.append(
+            f"  Distribución de prioridades: "
+            f"{self._resumen_prioridades(voraz['seleccionadas'])}"
+        )
+        lineas.extend(("", "EXPLORACIÓN"))
+        lineas.append(
+            f"Nodos: {backtracking['nodos_explorados']} | "
+            f"Soluciones: {backtracking['soluciones_evaluadas']} | "
+            f"Retrocesos: {backtracking['retrocesos']} | "
+            f"Podas: {backtracking['ramas_podadas']} "
+            f"(tiempo {backtracking['podas_por_tiempo']}, "
+            f"cota {backtracking['podas_por_cota']})."
+        )
+        if backtracking["historial_truncado"]:
+            lineas.append(
+                f"Historial limitado a {len(backtracking['historial'])} de "
+                f"{backtracking['eventos_totales']} eventos."
+            )
+        lineas.append(
+            "La búsqueda puede explorar O(2^n) nodos en el peor caso; "
+            "Backtracking optimiza la función objetivo, no garantiza menor "
+            "tiempo de ejecución que Greedy."
+        )
+
+        self.resultado_backtracking.configure(state="normal")
+        self.resultado_backtracking.delete("1.0", "end")
+        self.resultado_backtracking.insert("end", "\n".join(lineas))
+        self.resultado_backtracking.configure(state="disabled")
+        self.boton_historial_backtracking.configure(state="normal")
+        self.boton_graficos_backtracking.configure(state="normal")
+
+    def mostrar_historial_backtracking(self):
+        if self.resultados_backtracking is None:
+            return
+        resultado = self.resultados_backtracking[0]
+        ventana = tk.Toplevel(self.root)
+        ventana.title("Historial de Backtracking")
+        ventana.geometry("850x560")
+        texto = tk.Text(ventana, wrap="none", font=("Consolas", 9))
+        texto.pack(fill="both", expand=True)
+        for evento in resultado["historial"][:200]:
+            if evento["tipo"] == "nodo":
+                texto.insert(
+                    "end",
+                    f"Nodo {evento['nodo']} | padre {evento['padre']} | "
+                    f"profundidad {evento['profundidad']} | "
+                    f"ID {evento['id_incidencia']} | {evento['decision']} | "
+                    f"tiempo {evento['tiempo_acumulado']} | "
+                    f"seleccionadas {evento['seleccionadas']} | "
+                    f"mejor {evento['mejor_cantidad']}/"
+                    f"{evento['mejor_prioridad']}/{evento['mejor_tiempo']}"
+                    + (
+                        f" | PODA: {evento.get('motivo_poda')}"
+                        if evento.get("podada") else ""
+                    )
+                    + "\n"
+                )
+            else:
+                texto.insert(
+                    "end",
+                    f"Retroceso en nodo {evento['nodo']} tras ID "
+                    f"{evento['id_incidencia']}\n"
+                )
+        if resultado["historial_truncado"] or len(resultado["historial"]) > 200:
+            texto.insert(
+                "end",
+                "\nDetalle limitado; el resumen conserva los totales de toda la búsqueda.\n"
+            )
+        texto.configure(state="disabled")
+
+    def mostrar_graficos_backtracking_gui(self):
+        if self.resultados_backtracking is None:
+            return
+        try:
+            mostrar_graficos_backtracking(*self.resultados_backtracking)
+        except ImportError:
+            messagebox.showerror(
+                "Falta Matplotlib",
+                "Instala las dependencias con: python -m pip install -r requirements.txt"
+            )
+
+    @staticmethod
+    def _resumen_prioridades(incidencias):
+        nombres = {
+            1: "Baja",
+            2: "Media",
+            3: "Normal",
+            4: "Alta",
+            5: "Crítica",
+        }
+        cantidades = {prioridad: 0 for prioridad in nombres}
+        for incidencia in incidencias:
+            prioridad = incidencia["prioridad"]
+            if prioridad in cantidades:
+                cantidades[prioridad] += 1
+        return ", ".join(
+            f"{nombres[prioridad]}: {cantidad}"
+            for prioridad, cantidad in cantidades.items()
+        )
+
+    def calcular_plan_voraz(self):
+        try:
+            tiempo_disponible = int(self.tiempo_disponible_plan.get())
+            if tiempo_disponible < 1:
+                raise ValueError
+        except ValueError:
+            messagebox.showerror(
+                "Tiempo inválido",
+                "Ingresa un número entero de minutos mayor que cero."
+            )
+            return
+
+        inicio = time.perf_counter()
+        plan_prioridad = servicio.planificar_voraz_detallado(tiempo_disponible)
+        plan_menor_tiempo = servicio.planificar_voraz_detallado(
+            tiempo_disponible,
+            criterio="tiempo"
+        )
+        tiempo_ejecucion = time.perf_counter() - inicio
+        self.planes_calculados = (plan_prioridad, plan_menor_tiempo)
+
+        lineas = ["DECISIONES DEL PLAN VORAZ"]
+        if not plan_prioridad["decisiones"]:
+            lineas.append("No hay incidencias pendientes.")
+        for decision in plan_prioridad["decisiones"]:
+            incidencia = decision["incidencia"]
+            estado = "SELECCIONADA" if decision["seleccionada"] else "DESCARTADA"
+            lineas.append(
+                f"ID {incidencia['id']} | {incidencia['sku_equipo']} | "
+                f"Prioridad {incidencia['prioridad']} | "
+                f"{incidencia['tiempo_estimado']} min | {estado}"
+            )
+            lineas.append(f"  {decision['motivo']}")
+
+        lineas.extend(("", "ORDEN DE ATENCIÓN"))
+        for posicion, incidencia in enumerate(
+            plan_prioridad["seleccionadas"],
+            1
+        ):
+            lineas.append(
+                f"{posicion}. ID {incidencia['id']} | "
+                f"{incidencia['sku_equipo']} | {incidencia['problema']} | "
+                f"{incidencia['tiempo_estimado']} min"
+            )
+        if not plan_prioridad["seleccionadas"]:
+            lineas.append("Ninguna incidencia cabe en el tiempo disponible.")
+
+        lineas.extend(("", "RESUMEN DE TIEMPO DE MANTENIMIENTO"))
+        lineas.append(f"Disponible: {tiempo_disponible} min")
+        lineas.append(f"Utilizado: {plan_prioridad['tiempo_usado']} min")
+        lineas.append(f"Restante: {plan_prioridad['tiempo_restante']} min")
+        lineas.append(
+            f"Ejecución de los algoritmos: {tiempo_ejecucion:.8f} s "
+            "(no es tiempo de mantenimiento)."
+        )
+        lineas.extend(("", "COMPARACIÓN DE ESTRATEGIAS"))
+        for nombre, resultado in (
+            ("Prioridad y duración", plan_prioridad),
+            ("Menor duración primero", plan_menor_tiempo),
+        ):
+            lineas.append(
+                f"{nombre}: {len(resultado['seleccionadas'])} seleccionadas, "
+                f"{resultado['tiempo_usado']} min usados, "
+                f"{resultado['tiempo_restante']} min restantes."
+            )
+            lineas.append(
+                "  Prioridades: "
+                f"{self._resumen_prioridades(resultado['seleccionadas'])}"
+            )
+
+        self.resultado_plan.configure(state="normal")
+        self.resultado_plan.delete("1.0", "end")
+        self.resultado_plan.insert("end", "\n".join(lineas))
+        self.resultado_plan.configure(state="disabled")
+        self.boton_graficos.configure(state="normal")
+
+    def mostrar_graficos_plan(self):
+        if self.planes_calculados is None:
+            messagebox.showinfo("Primero calcula el plan", "Calcula una planificación antes de ver sus gráficos.")
+            return
+        mostrar_graficos_planificacion(*self.planes_calculados)
 
     def _crear_formulario_equipo(self):
         ttk.Label(

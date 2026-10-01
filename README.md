@@ -24,6 +24,7 @@ El sistema busca facilitar:
 * El seguimiento del estado de las incidencias.
 * La generación de estadísticas.
 * La demostración y comparación de algoritmos de ordenamiento.
+* La planificación optimizada con Backtracking y Greedy.
 
 Este proyecto también sirve como práctica para comprender cómo pueden aplicarse algoritmos y estructuras de datos a un problema real de gestión.
 
@@ -429,6 +430,36 @@ El planificador considera solo las incidencias pendientes y elige una por una us
 
 Este método toma la mejor decisión disponible en cada paso; es una regla práctica, no una garantía de que el plan sea el mejor en todos los escenarios. Como vuelve a revisar las candidatas en cada elección, su tiempo crece aproximadamente como `O(n²)`.
 
+### Backtracking para planificar mantenimientos
+
+La planificación con Backtracking está en la pestaña **Backtracking** de la
+GUI y en la opción 14 del menú de consola. Considera únicamente incidencias
+`Pendiente` y no modifica los registros originales.
+
+La función objetivo es lexicográfica:
+
+1. Maximizar la cantidad de incidencias atendidas.
+2. Maximizar la suma de prioridad, con la ponderación existente: prioridad 1
+    aporta 1 punto y prioridad 5 aporta 5 puntos.
+3. Si persiste el empate, minimizar los minutos totales de mantenimiento.
+
+La duración total no puede superar el presupuesto del técnico. La búsqueda
+explora las decisiones de incluir y excluir cada incidencia. Poda ramas que
+exceden el presupuesto y ramas cuya cota optimista no puede superar la mejor
+solución actual. Muestra nodos, hojas evaluadas, retrocesos y podas; el detalle
+del historial se consulta bajo demanda y se limita a 5.000 eventos.
+
+El peor caso temporal es `O(2^n)`, con `O(n)` de pila recursiva. El historial
+almacenado tiene un límite de 5.000 eventos, y sus instantáneas de selecciones
+pueden ocupar hasta `O(n · H)` espacio, donde `H` es el número de eventos
+retenidos. La poda puede reducir la exploración en algunos casos, pero no
+elimina el crecimiento exponencial del peor caso.
+
+La comparación con Greedy usa las mismas incidencias y presupuesto. Backtracking
+optimiza la función objetivo definida; no necesariamente tarda menos que Greedy.
+Ambos tiempos de ejecución se miden con `time.perf_counter()` y se muestran
+aparte de la duración estimada del mantenimiento.
+
 ---
 
 ## 🔎 Búsqueda
@@ -493,11 +524,13 @@ clave → valor
 
 ```text
 proyecto/
-├── main.py                  # Menús y comunicación por consola
-├── metodos.py               # Datos, validaciones y reglas de negocio
-├── algoritmo_voraz.py       # Planificación de incidencias
-├── busqueda_binaria.py      # Búsqueda de equipos por SKU
-├── ordenamiento_burbuja.py  # Ordenamiento de equipos, incidencias y números
+├── main.py                  # Inicio de GUI o CLI
+├── app/consola.py           # Menú de consola
+├── core/metodos.py          # Datos, validaciones y reglas de negocio
+├── algoritmos/              # Greedy, Backtracking, búsqueda y ordenamiento
+├── interfaz/gui.py          # Interfaz de escritorio
+├── interfaz/graficos.py     # Gráficos de planificación
+├── requirements.txt         # Dependencias de visualización
 └── README.md
 ```
 
@@ -566,7 +599,16 @@ cd proyecto-analisis-algoritmo-aaep-upn-2026
 
 ### 3. Ejecutar el sistema
 
+Instala Matplotlib para generar los gráficos:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
 La aplicación abre la interfaz gráfica de escritorio (Tkinter) desde `main.py`:
+Las pestañas **Planificación voraz** y **Backtracking** están disponibles
+directamente en la GUI. Backtracking permite calcular la combinación óptima,
+compararla con Greedy, consultar el historial y abrir los gráficos.
 
 ```bash
 python main.py
@@ -577,6 +619,10 @@ Para iniciar la versión de consola:
 ```bash
 python main.py --cli
 ```
+
+En el menú de consola, la opción 15 solicita el tiempo disponible, muestra las
+decisiones del Greedy, compara el resultado con menor tiempo primero y abre los
+gráficos de planificación.
 
 La lógica del sistema está en `core/`, los algoritmos en `algoritmos/`, las
 interfaces en `interfaz/` y el menú de consola en `app/`.
@@ -609,11 +655,16 @@ Al iniciar el programa se muestra:
 9. Actualizar estado
 10. Mostrar estadísticas
 11. Demostración de algoritmos
+12. Algoritmo recursivo
+13. Algoritmo voraz
+14. Planificar mantenimiento con Backtracking
+15. Planificar mantenimiento con algoritmo voraz
 H. Ayuda
 0. Salir
 ```
 
 El usuario selecciona una opción mediante el teclado.
+La GUI también ofrece las pestañas **Planificación voraz** y **Backtracking**.
 
 ---
 
@@ -766,6 +817,6 @@ Si se requiere una licencia específica para distribución o uso comercial, se r
 
 El **Sistema de Mantenimiento de Equipos Informáticos** permite gestionar de manera sencilla equipos e incidencias de mantenimiento, proporcionando funcionalidades de registro, consulta, búsqueda, actualización, planificación y estadísticas.
 
-Además de resolver una necesidad básica de gestión, el proyecto permite demostrar la aplicación práctica de **Bubble Sort**, búsqueda binaria, búsqueda secuencial y un algoritmo voraz, junto con técnicas de validación y organización modular del código.
+Además de resolver una necesidad básica de gestión, el proyecto permite demostrar la aplicación práctica de **Bubble Sort**, búsqueda binaria, búsqueda secuencial, algoritmos **Greedy** y **Backtracking**, junto con técnicas de validación y organización modular del código.
 
 El proyecto constituye una base que puede evolucionar posteriormente hacia una solución con persistencia de datos, interfaz gráfica o aplicación web.

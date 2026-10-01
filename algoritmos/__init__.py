@@ -1,0 +1,1 @@
+"""Algoritmos de búsqueda, ordenamiento y planificación."""

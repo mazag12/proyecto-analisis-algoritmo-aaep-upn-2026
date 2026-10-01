@@ -4,9 +4,9 @@ Created on Tue Sep  8 21:07:30 2026
 @author: MAZAG
 """
 import time
-from algoritmo_voraz import planificar_por_prioridad
-from busqueda_binaria import buscar_sku_ordenado
-from ordenamiento_burbuja import (
+from algoritmos.algoritmo_voraz import planificar_por_prioridad
+from algoritmos.busqueda_binaria import buscar_sku_ordenado
+from algoritmos.ordenamiento_burbuja import (
     ordenar_equipos_por_sku,
     ordenar_numeros,
     ordenar_prioridad_descendente,

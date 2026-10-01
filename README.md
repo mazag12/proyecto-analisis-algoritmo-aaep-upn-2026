@@ -182,7 +182,14 @@ Es una regla práctica para decidir qué atender primero, no una promesa de que 
 
 ### 9. Actualizar estado
 
-Permite modificar el estado de una incidencia.
+Permite avanzar una incidencia únicamente en esta secuencia:
+
+`Pendiente` → `En proceso` → `Finalizado`
+
+No se permiten retrocesos ni cambios después de finalizar. Cada avance exige
+un detalle de mantenimiento de entre 10 y 500 caracteres, que se conserva en
+el historial de la incidencia. La interfaz muestra una indicación de apoyo
+para el estado actual y el detalle esperado.
 
 Estados disponibles:
 
@@ -559,11 +566,20 @@ cd proyecto-analisis-algoritmo-aaep-upn-2026
 
 ### 3. Ejecutar el sistema
 
-El archivo principal es `main.py`:
+La aplicación abre la interfaz gráfica de escritorio (Tkinter) desde `main.py`:
 
 ```bash
 python main.py
 ```
+
+Para iniciar la versión de consola:
+
+```bash
+python main.py --cli
+```
+
+La lógica del sistema está en `core/`, los algoritmos en `algoritmos/`, las
+interfaces en `interfaz/` y el menú de consola en `app/`.
 
 En algunos sistemas puede ser necesario utilizar:
 

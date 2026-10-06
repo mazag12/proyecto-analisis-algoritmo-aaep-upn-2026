@@ -533,7 +533,8 @@ class MantenimientoGUI:
         ):
             self.campos_equipo[clave] = self._campo(
                 self.tab_nuevo_equipo,
-                etiqueta
+                etiqueta,
+                clave
             )
         ttk.Button(
             self.tab_nuevo_equipo,
@@ -560,7 +561,8 @@ class MantenimientoGUI:
         self.selector_sku.pack(side="left", fill="x", expand=True)
         self.problema = self._campo(
             self.tab_nueva_incidencia,
-            "Problema detectado"
+            "Problema detectado",
+            "problema"
         )
         fila = ttk.Frame(self.tab_nueva_incidencia)
         fila.pack(fill="x", pady=6)
@@ -592,9 +594,31 @@ class MantenimientoGUI:
         ttk.Label(fila, text="Tiempo estimado", width=25).pack(side="left")
         self.horas = tk.StringVar(value="0")
         self.minutos = tk.StringVar(value="30")
-        ttk.Spinbox(fila, from_=0, to=999, textvariable=self.horas, width=6).pack(side="left")
+        validar_horas = self.root.register(
+            lambda valor: MantenimientoGUI._entrada_valida("horas", valor)
+        )
+        ttk.Spinbox(
+            fila,
+            from_=0,
+            to=999,
+            textvariable=self.horas,
+            width=6,
+            validate="key",
+            validatecommand=(validar_horas, "%P")
+        ).pack(side="left")
         ttk.Label(fila, text="horas").pack(side="left", padx=(5, 14))
-        ttk.Spinbox(fila, from_=0, to=59, textvariable=self.minutos, width=6).pack(side="left")
+        validar_minutos = self.root.register(
+            lambda valor: MantenimientoGUI._entrada_valida("minutos", valor)
+        )
+        ttk.Spinbox(
+            fila,
+            from_=0,
+            to=59,
+            textvariable=self.minutos,
+            width=6,
+            validate="key",
+            validatecommand=(validar_minutos, "%P")
+        ).pack(side="left")
         ttk.Label(fila, text="minutos").pack(side="left", padx=5)
         ttk.Label(
             self.tab_nueva_incidencia,
@@ -608,13 +632,64 @@ class MantenimientoGUI:
         ).pack(anchor="w", pady=10)
 
     @staticmethod
-    def _campo(contenedor, etiqueta, variable=None):
+    def _campo(contenedor, etiqueta, campo, variable=None):
         fila = ttk.Frame(contenedor)
         fila.pack(fill="x", pady=6)
         ttk.Label(fila, text=etiqueta, width=25).pack(side="left")
         entrada = ttk.Entry(fila, textvariable=variable, width=48)
+        validar_texto = entrada.register(
+            lambda valor: MantenimientoGUI._entrada_valida(campo, valor)
+        )
+        entrada.configure(
+            validate="key",
+            validatecommand=(validar_texto, "%P")
+        )
         entrada.pack(side="left", fill="x", expand=True)
         return entrada
+
+    @staticmethod
+    def _entrada_valida(campo, valor):
+        if campo in ("horas", "minutos"):
+            maximo = 999 if campo == "horas" else 59
+            digitos = 3 if campo == "horas" else 2
+            return (
+                valor == ""
+                or (
+                    valor.isascii()
+                    and valor.isdigit()
+                    and len(valor) <= digitos
+                    and int(valor) <= maximo
+                )
+            )
+
+        limites = {
+            "sku": 20,
+            "tipo": 50,
+            "marca": 50,
+            "modelo": 50,
+            "usuario": 50,
+            "equipo": 50,
+            "problema": 250,
+        }
+        if campo not in limites or len(valor) > limites[campo]:
+            return False
+        if campo == "problema":
+            return all(caracter.isprintable() for caracter in valor)
+
+        def permitido(caracter):
+            if campo == "sku":
+                return caracter.isascii() and caracter.isalnum()
+            if campo == "tipo":
+                return caracter.isalpha() or caracter in " -'"
+            if campo == "marca":
+                return caracter.isalnum() or caracter in " &.-"
+            if campo == "modelo":
+                return caracter.isalnum() or caracter in " ._/-"
+            if campo == "usuario":
+                return caracter.isalnum() or caracter in "._@-"
+            return caracter.isalnum() or caracter in " _./-"
+
+        return all(permitido(caracter) for caracter in valor)
 
     def actualizar_listas(self):
         self._cargar_incidencias()

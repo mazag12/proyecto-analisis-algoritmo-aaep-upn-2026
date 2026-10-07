@@ -137,143 +137,7 @@ equipos = [
 # Bubble Sort deja los equipos ordenados para que búsqueda binaria sea válida.
 equipos = ordenar_equipos_por_sku(equipos)
 
-incidencias = [
-    {
-        "id": 1,
-        "sku_equipo": "PC1001",
-        "problema": "No enciende correctamente",
-        "tipo_mantenimiento": "Correctivo",
-        "prioridad": 5,
-        "tiempo_estimado": 60,
-        "estado": "Pendiente"
-    },
-    {
-        "id": 2,
-        "sku_equipo": "LAP1002",
-        "problema": "Temperatura elevada del equipo",
-        "tipo_mantenimiento": "Predictivo",
-        "prioridad": 4,
-        "tiempo_estimado": 45,
-        "estado": "Pendiente"
-    },
-    {
-        "id": 3,
-        "sku_equipo": "PC1003",
-        "problema": "Actualizacion de software pendiente",
-        "tipo_mantenimiento": "Preventivo",
-        "prioridad": 2,
-        "tiempo_estimado": 30,
-        "estado": "Pendiente"
-    },
-    {
-        "id": 4,
-        "sku_equipo": "LAP1004",
-        "problema": "Bateria con bajo rendimiento",
-        "tipo_mantenimiento": "Correctivo",
-        "prioridad": 3,
-        "tiempo_estimado": 90,
-        "estado": "En proceso"
-    },
-    {
-        "id": 5,
-        "sku_equipo": "PC1005",
-        "problema": "El equipo no inicia el sistema operativo",
-        "tipo_mantenimiento": "Correctivo",
-        "prioridad": 5,
-        "tiempo_estimado": 120,
-        "estado": "Pendiente"
-    },
-    {
-        "id": 6,
-        "sku_equipo": "LAP1006",
-        "problema": "Lentitud general durante la ejecucion de programas",
-        "tipo_mantenimiento": "Preventivo",
-        "prioridad": 3,
-        "tiempo_estimado": 40,
-        "estado": "Pendiente"
-    },
-    {
-        "id": 7,
-        "sku_equipo": "PC1007",
-        "problema": "Fallas intermitentes en el sistema",
-        "tipo_mantenimiento": "Predictivo",
-        "prioridad": 4,
-        "tiempo_estimado": 75,
-        "estado": "Finalizado"
-    },
-    {
-        "id": 8,
-        "sku_equipo": "LAP1008",
-        "problema": "Problemas de conexion a la red corporativa",
-        "tipo_mantenimiento": "Correctivo",
-        "prioridad": 4,
-        "tiempo_estimado": 50,
-        "estado": "Pendiente"
-    },
-    {
-        "id": 9,
-        "sku_equipo": "PC1009",
-        "problema": "Pantalla presenta errores durante el uso",
-        "tipo_mantenimiento": "Correctivo",
-        "prioridad": 5,
-        "tiempo_estimado": 80,
-        "estado": "Pendiente"
-    },
-    {
-        "id": 10,
-        "sku_equipo": "LAP1010",
-        "problema": "Actualizacion de controladores requerida",
-        "tipo_mantenimiento": "Preventivo",
-        "prioridad": 2,
-        "tiempo_estimado": 25,
-        "estado": "Finalizado"
-    },
-    {
-        "id": 11,
-        "sku_equipo": "PC1001",
-        "problema": "Espacio insuficiente en la unidad de almacenamiento",
-        "tipo_mantenimiento": "Preventivo",
-        "prioridad": 2,
-        "tiempo_estimado": 35,
-        "estado": "Pendiente"
-    },
-    {
-        "id": 12,
-        "sku_equipo": "LAP1002",
-        "problema": "Teclado presenta algunas teclas sin respuesta",
-        "tipo_mantenimiento": "Correctivo",
-        "prioridad": 4,
-        "tiempo_estimado": 55,
-        "estado": "Pendiente"
-    },
-    {
-        "id": 13,
-        "sku_equipo": "PC1003",
-        "problema": "Se detectaron errores en el disco de almacenamiento",
-        "tipo_mantenimiento": "Predictivo",
-        "prioridad": 5,
-        "tiempo_estimado": 100,
-        "estado": "Pendiente"
-    },
-    {
-        "id": 14,
-        "sku_equipo": "PC1007",
-        "problema": "Limpieza interna y mantenimiento preventivo",
-        "tipo_mantenimiento": "Preventivo",
-        "prioridad": 1,
-        "tiempo_estimado": 45,
-        "estado": "Pendiente"
-    },
-    {
-        "id": 15,
-        "sku_equipo": "LAP1010",
-        "problema": "Ventilador genera ruido durante el funcionamiento",
-        "tipo_mantenimiento": "Predictivo",
-        "prioridad": 3,
-        "tiempo_estimado": 65,
-        "estado": "En proceso"
-    }
-]
+incidencias = []
 
 for equipo_registrado in equipos:
     tiene_incidencia_abierta = any(
@@ -496,6 +360,12 @@ def registrar_equipo(
     equipo = equipo.strip()
 
     if buscar_equipo(sku) is not None:
+        return False
+
+    if any(
+        equipo_registrado["equipo"].casefold() == equipo.casefold()
+        for equipo_registrado in equipos
+    ):
         return False
 
 
